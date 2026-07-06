@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle2, AlertCircle, Clock, UploadCloud, ChevronDown } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Clock, ChevronDown } from 'lucide-react';
 import { api } from '../services/api';
 
 const STATUS = {
@@ -55,6 +55,16 @@ export default function AuditoriaView({ data, onAuditChange }) {
 
     try {
       await api.updateAuditDocument(docId, false, feedback.trim());
+      await fetchAudit(selectedOrgId);
+      if (onAuditChange) onAuditChange();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSubmitDoc = async (docId) => {
+    try {
+      await api.submitAuditDocument(docId);
       await fetchAudit(selectedOrgId);
       if (onAuditChange) onAuditChange();
     } catch (err) {
@@ -124,49 +134,62 @@ export default function AuditoriaView({ data, onAuditChange }) {
                   <div key={doc.id}
                     className={`px-6 py-4.5 hover:bg-gray-50/40 transition-colors ${i < docs.length - 1 ? 'border-b border-gray-50' : ''}`}
                   >
-                    <div className="flex items-start gap-4">
-                      <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${cfg.cls}`} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-[13px] font-semibold text-gray-800">{doc.name}</p>
-                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${cfg.pill}`}>{cfg.label}</span>
-                          <span className="text-[9px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded-full">Obrigatório</span>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-4 flex-1 min-w-0">
+                        <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${cfg.cls}`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-[13px] font-semibold text-gray-800">{doc.name}</p>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${cfg.pill}`}>{cfg.label}</span>
+                            <span className="text-[9px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded-full">Obrigatório</span>
+                          </div>
+                          {doc.fileUrl && (
+                            <a
+                              href="#"
+                              onClick={(e) => e.preventDefault()}
+                              className="text-[11px] text-gray-400 hover:text-indigo-600 transition-colors mt-1 inline-block hover:underline"
+                            >
+                              Visualizar Documento Submetido
+                            </a>
+                          )}
+                          {doc.feedback && (
+                            <p className="text-[11px] text-red-500 mt-2 bg-red-50 px-2.5 py-1 rounded-lg inline-block border border-red-100/50 leading-relaxed">
+                              <strong>Motivo da Rejeição:</strong> {doc.feedback}
+                            </p>
+                          )}
                         </div>
-                        {doc.fileUrl && (
-                          <a
-                            href="#"
-                            onClick={(e) => e.preventDefault()}
-                            className="text-[11px] text-gray-400 hover:text-indigo-600 transition-colors mt-1 inline-block hover:underline"
-                          >
-                            Visualizar Documento Submetido
-                          </a>
-                        )}
-                        {doc.feedback && (
-                          <p className="text-[11px] text-red-500 mt-2 bg-red-50 px-2.5 py-1 rounded-lg inline-block border border-red-100/50 leading-relaxed">
-                            <strong>Motivo da Rejeição:</strong> {doc.feedback}
-                          </p>
-                        )}
                       </div>
                       
-                      {/* Controlos de aprovação pelo Auditor */}
-                      <div className="flex items-center gap-3.5 shrink-0">
-                        <button
-                          onClick={() => handleApprove(doc.id)}
-                          disabled={doc.isApproved === true}
-                          className={`text-[11px] font-semibold transition-all ${
-                            doc.isApproved === true 
-                              ? 'text-gray-300 cursor-default' 
-                              : 'text-emerald-600 hover:text-emerald-700 hover:underline'
-                          }`}
-                        >
-                          Aprovar
-                        </button>
-                        <button
-                          onClick={() => handleReject(doc.id)}
-                          className="text-[11px] font-semibold text-red-500 hover:text-red-600 hover:underline"
-                        >
-                          Rejeitar
-                        </button>
+                      {/* Controlos de aprovação pelo Auditor / Ações do Utilizador */}
+                      <div className="flex items-center gap-3.5 shrink-0 self-center">
+                        {!doc.fileUrl || doc.isApproved === false ? (
+                          <button
+                            onClick={() => handleSubmitDoc(doc.id)}
+                            className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-[10px] font-bold rounded-lg transition-colors focus:outline-none"
+                          >
+                            Submeter Ficheiro
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleApprove(doc.id)}
+                              disabled={doc.isApproved === true}
+                              className={`text-[11px] font-semibold transition-all ${
+                                doc.isApproved === true 
+                                  ? 'text-gray-300 cursor-default' 
+                                  : 'text-emerald-600 hover:text-emerald-700 hover:underline'
+                              }`}
+                            >
+                              Aprovar
+                            </button>
+                            <button
+                              onClick={() => handleReject(doc.id)}
+                              className="text-[11px] font-semibold text-red-500 hover:text-red-600 hover:underline"
+                            >
+                              Rejeitar
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -18,14 +18,26 @@ async function main() {
 
   console.log('Seeding organizations...');
   
-  // JE Porto
+  // JE Porto (APPROVED - 100% score)
   await prisma.organization.create({
     data: {
       name: 'JE Porto',
       status: 'JUNIOR_ENTERPRISE',
       audits: {
         create: [
-          { year: 2026, status: 'APPROVED', score: 94.5 }
+          {
+            year: 2026,
+            status: 'APPROVED',
+            score: 100.0,
+            documents: {
+              create: [
+                { name: 'Registo de Atividade Semestral', isApproved: true, fileUrl: '/uploads/registo_atividade.pdf' },
+                { name: 'Relatório de Contas', isApproved: true, fileUrl: '/uploads/relatorio_contas.pdf' },
+                { name: 'Estatutos Atualizados', isApproved: true, fileUrl: '/uploads/estatutos.pdf' },
+                { name: 'Ata da Assembleia Geral', isApproved: true, fileUrl: '/uploads/ata_ag.pdf' }
+              ]
+            }
+          }
         ]
       },
       indicatorCycles: {
@@ -46,14 +58,26 @@ async function main() {
     }
   });
 
-  // JE Lisboa
+  // JE Lisboa (DOCUMENTS_SUBMITTED - 50% score)
   await prisma.organization.create({
     data: {
       name: 'JE Lisboa',
       status: 'JUNIOR_ENTERPRISE',
       audits: {
         create: [
-          { year: 2026, status: 'DOCUMENTS_SUBMITTED', score: null }
+          {
+            year: 2026,
+            status: 'DOCUMENTS_SUBMITTED',
+            score: 50.0,
+            documents: {
+              create: [
+                { name: 'Registo de Atividade Semestral', isApproved: true, fileUrl: '/uploads/registo_atividade.pdf' },
+                { name: 'Relatório de Contas', isApproved: true, fileUrl: '/uploads/relatorio_contas.pdf' },
+                { name: 'Estatutos Atualizados', isApproved: null, fileUrl: '/uploads/estatutos.pdf' },
+                { name: 'Ata da Assembleia Geral', isApproved: null, fileUrl: '/uploads/ata_ag.pdf' }
+              ]
+            }
+          }
         ]
       },
       indicatorCycles: {
@@ -74,14 +98,26 @@ async function main() {
     }
   });
 
-  // Júnior Minho
+  // Júnior Minho (SCHEDULED - 0% score)
   await prisma.organization.create({
     data: {
       name: 'Júnior Minho',
       status: 'JUNIOR_INITIATIVE',
       audits: {
         create: [
-          { year: 2026, status: 'SCHEDULED', score: null }
+          {
+            year: 2026,
+            status: 'SCHEDULED',
+            score: 0.0,
+            documents: {
+              create: [
+                { name: 'Registo de Atividade Semestral', isApproved: null, fileUrl: null },
+                { name: 'Relatório de Contas', isApproved: null, fileUrl: null },
+                { name: 'Estatutos Atualizados', isApproved: null, fileUrl: null },
+                { name: 'Ata da Assembleia Geral', isApproved: null, fileUrl: null }
+              ]
+            }
+          }
         ]
       },
       indicatorCycles: {
@@ -102,14 +138,26 @@ async function main() {
     }
   });
 
-  // Coimbra Júnior
+  // Coimbra Júnior (REJECTED - 25% score)
   await prisma.organization.create({
     data: {
       name: 'Coimbra Júnior',
       status: 'JUNIOR_ENTERPRISE',
       audits: {
         create: [
-          { year: 2026, status: 'REJECTED', score: 45.0 }
+          {
+            year: 2026,
+            status: 'REJECTED',
+            score: 25.0,
+            documents: {
+              create: [
+                { name: 'Registo de Atividade Semestral', isApproved: true, fileUrl: '/uploads/registo_atividade.pdf' },
+                { name: 'Relatório de Contas', isApproved: false, fileUrl: '/uploads/relatorio_contas.pdf', feedback: 'Relatório de contas incompleto, falta assinatura do conselho fiscal.' },
+                { name: 'Estatutos Atualizados', isApproved: null, fileUrl: '/uploads/estatutos.pdf' },
+                { name: 'Ata da Assembleia Geral', isApproved: null, fileUrl: '/uploads/ata_ag.pdf' }
+              ]
+            }
+          }
         ]
       },
       indicatorCycles: {

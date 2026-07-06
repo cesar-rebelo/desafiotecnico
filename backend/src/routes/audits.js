@@ -109,4 +109,59 @@ router.put('/documents/:docId', async (req, res) => {
   }
 });
 
+router.post('/documents/:docId/submit', async (req, res) => {
+  const { docId } = req.params;
+
+  if (!prisma) {
+    return res.status(500).json({ error: 'Banco de dados offline' });
+  }
+
+  try {
+    // 1. Atualizar o documento marcando como enviado e reiniciando a avaliação do auditor
+    const doc = await prisma.auditDocument.update({
+      where: { id: docId },
+      data: {
+        fileUrl: `/uploads/simulado_${Date.now()}.pdf`,
+        isApproved: null, // Volta a pendente de análise
+        feedback: null
+      }
+    });
+
+    // 2. Buscar todos os documentos da mesma auditoria para recalcular score/status
+    const allDocs = await prisma.auditDocument.findMany({
+      where: { auditId: doc.auditId }
+    });
+
+    const total = allDocs.length;
+    const approved = allDocs.filter(d => d.isApproved === true).length;
+    const rejected = allDocs.filter(d => d.isApproved === false).length;
+    const hasFiles = allDocs.filter(d => d.fileUrl !== null).length;
+
+    // Calcular score
+    const score = total > 0 ? (approved / total) * 100 : 0;
+
+    // Calcular status geral da auditoria
+    let status = 'SCHEDULED';
+    if (approved === total) {
+      status = 'APPROVED';
+    } else if (rejected > 0) {
+      status = 'REJECTED';
+    } else if (hasFiles > 0) {
+      status = 'DOCUMENTS_SUBMITTED';
+    }
+
+    // 3. Atualizar a auditoria
+    const updatedAudit = await prisma.audit.update({
+      where: { id: doc.auditId },
+      data: { score, status },
+      include: { documents: true }
+    });
+
+    res.json({ document: doc, audit: updatedAudit });
+  } catch (error) {
+    console.error("Database error submitting document:", error.message);
+    res.status(500).json({ error: 'Erro ao submeter documento' });
+  }
+});
+
 export default router;

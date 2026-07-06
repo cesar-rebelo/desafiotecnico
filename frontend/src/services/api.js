@@ -79,5 +79,12 @@ export const api = {
     const res = await fetch(`${API_URL}/acompanhamento/${orgId}`);
     if (!res.ok) throw new Error('Erro ao obter ciclos de indicadores');
     return res.json();
+  },
+  submitAuditDocument: async (docId) => {
+    const res = await fetch(`${API_URL}/audits/documents/${docId}/submit`, {
+      method: 'POST'
+    });
+    if (!res.ok) throw new Error('Erro ao submeter documento de auditoria');
+    return res.json();
   }
 };
