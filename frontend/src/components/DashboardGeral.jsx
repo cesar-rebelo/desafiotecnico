@@ -140,11 +140,7 @@ export default function DashboardGeral({ data, getStatusBadge, onCreateJE, newJE
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
                               <button
-                                onClick={() => {
-                                  if (confirm(`Tem a certeza que deseja eliminar a ${org.name}?`)) {
-                                    onDeleteJE(org.id);
-                                  }
-                                }}
+                                onClick={() => onDeleteJE(org.id, org.name)}
                                 className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                                 title="Eliminar"
                               >

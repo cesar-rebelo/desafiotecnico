@@ -78,11 +78,7 @@ export default function ComunicacaoView({ announcements: initial, onPublish, onD
                       {ann.read ? <Circle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4 text-indigo-400" />}
                     </button>
                     <button
-                      onClick={() => {
-                        if (confirm('Tem a certeza que deseja eliminar este comunicado?')) {
-                          onDelete(ann.id);
-                        }
-                      }}
+                      onClick={() => onDelete(ann.id, ann.title)}
                       className="p-1.5 text-gray-300 hover:text-red-500 rounded-lg transition-colors"
                       title="Eliminar Comunicado"
                     >

@@ -7,6 +7,7 @@ import AuditoriaView from './components/AuditoriaView';
 import CensosView from './components/CensosView';
 import ComunicacaoView from './components/ComunicacaoView';
 import JeBackground from './components/JeBackground';
+import ConfirmModal from './components/ConfirmModal';
 
 const MOCK_DATA = {
   metrics: { totalOrganizations: 0, pendingAudits: 0, activeCycles: 0, comunicadosNaoLidos: 0 },
@@ -48,6 +49,14 @@ export default function App() {
   const [loading, setLoading]     = useState(true);
   const [newJE, setNewJE]         = useState({ name: '', status: 'JUNIOR_INITIATIVE' });
 
+  // Estado para o Pop-up customizado de confirmação
+  const [confirmData, setConfirmData] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   const refreshData = async () => {
     try {
       const summary = await api.getDashboardSummary();
@@ -87,13 +96,20 @@ export default function App() {
     }
   };
 
-  const handleDeleteJE = async (id) => {
-    try {
-      await api.deleteOrganization(id);
-      await refreshData();
-    } catch (err) {
-      console.error('Error deleting organization:', err);
-    }
+  const handleDeleteJE = (id, name) => {
+    setConfirmData({
+      isOpen: true,
+      title: 'Eliminar Organização',
+      message: `Tem a certeza que deseja eliminar a ${name}? Todos os indicadores e auditorias associados serão removidos permanentemente da base de dados.`,
+      onConfirm: async () => {
+        try {
+          await api.deleteOrganization(id);
+          await refreshData();
+        } catch (err) {
+          console.error('Error deleting organization:', err);
+        }
+      }
+    });
   };
 
   const handlePublishAnnouncement = async (title, content) => {
@@ -105,13 +121,20 @@ export default function App() {
     }
   };
 
-  const handleDeleteAnnouncement = async (id) => {
-    try {
-      await api.deleteAnnouncement(id);
-      await refreshData();
-    } catch (err) {
-      console.error('Error deleting announcement:', err);
-    }
+  const handleDeleteAnnouncement = (id, title) => {
+    setConfirmData({
+      isOpen: true,
+      title: 'Eliminar Comunicado',
+      message: `Tem a certeza que deseja eliminar o comunicado "${title}"? Esta ação não poderá ser desfeita.`,
+      onConfirm: async () => {
+        try {
+          await api.deleteAnnouncement(id);
+          await refreshData();
+        } catch (err) {
+          console.error('Error deleting announcement:', err);
+        }
+      }
+    });
   };
 
   const handleIndicators = async (formData) => {
@@ -179,6 +202,15 @@ export default function App() {
           </main>
         </div>
       </div>
+
+      {/* Pop-up de confirmação unificado e customizado */}
+      <ConfirmModal
+        isOpen={confirmData.isOpen}
+        title={confirmData.title}
+        message={confirmData.message}
+        onConfirm={confirmData.onConfirm}
+        onCancel={() => setConfirmData(p => ({ ...p, isOpen: false }))}
+      />
     </>
   );
 }
