@@ -68,7 +68,6 @@ export default function JeBackground() {
                 return (
                   <img
                     key={rowIdx}
-                    // Adicionado cache-buster ?v=2 para forçar o browser a recarregar a imagem do contorno cinzento
                     src="/je-outline.png?v=2"
                     alt=""
                     style={{
@@ -77,7 +76,7 @@ export default function JeBackground() {
                       left: 0,
                       width: '46px',
                       height: 'auto',
-                      opacity: 0.28,
+                      opacity: 0.22, // Opacidade ideal para contornos visíveis mas discretos
                       filter: 'grayscale(1)',
                     }}
                   />
@@ -88,12 +87,12 @@ export default function JeBackground() {
         })}
       </div>
 
-      {/* Vignette radial suave */}
+      {/* Vignette radial ultra suave (apenas esbate ligeiramente nos cantos extremos) */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'radial-gradient(ellipse 65% 60% at 50% 50%, rgba(244,245,247,0.05) 0%, rgba(244,245,247,0.4) 40%, rgba(244,245,247,0.85) 75%, rgba(244,245,247,0.98) 100%)',
+          background: 'radial-gradient(circle at 50% 50%, rgba(244,245,247,0) 65%, rgba(244,245,247,0.35) 100%)',
         }}
       />
 
