@@ -6,6 +6,7 @@ import AcompanhamentoView from './components/AcompanhamentoView';
 import AuditoriaView from './components/AuditoriaView';
 import CensosView from './components/CensosView';
 import ComunicacaoView from './components/ComunicacaoView';
+import JeBackground from './components/JeBackground';
 
 const MOCK_DATA = {
   metrics: { totalOrganizations: 24, pendingAudits: 5, activeCycles: 2, comunicadosNaoLidos: 2 },
@@ -107,7 +108,7 @@ export default function App() {
   return (
     <>
       {/* Camada de textura JE animada */}
-      <div className="je-bg" aria-hidden="true" />
+      <JeBackground />
 
       <div className="relative z-10 flex h-screen overflow-hidden">
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
