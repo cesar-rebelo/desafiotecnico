@@ -1,13 +1,200 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
-generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
-}
-
 datasource db {
   provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ----------------------------------------------------
+// MÓDULO 7: Objetivos e Gestão (Entidades Principais)
+// ----------------------------------------------------
+
+enum Role {
+  FEDERATION_ADMIN   // IT Manager, Direção JE Portugal
+  AUDITOR            // Equipa de Auditoria
+  JE_PRESIDENT       // Presidente de uma Júnior Empresa
+  JE_MEMBER          // Membro de uma Júnior Empresa
+}
+
+enum OrgStatus {
+  JUNIOR_INITIATIVE  // Júnior Iniciativa
+  JUNIOR_ENTERPRISE  // Júnior Empresa
+}
+
+model User {
+  id             String             @id @default(uuid())
+  email          String             @unique
+  passwordHash   String
+  name           String
+  role           Role               @default(JE_MEMBER)
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id])
+  
+  // Relações
+  reviewedCycles IndicatorCycle[]   @relation("ReviewerRelation")
+  readReceipts   AnnouncementRead[]
+  createdAt      DateTime           @default(now())
+}
+
+model Organization {
+  id        String       @id @default(uuid())
+  name      String       @unique
+  status    OrgStatus    @default(JUNIOR_INITIATIVE)
+  logoUrl   String?
+  
+  // Relações
+  users           User[]
+  indicatorCycles IndicatorCycle[]
+  audits          Audit[]
+  eventApps       EventApplication[]
+  objectives      Objective[]
+  createdAt       DateTime           @default(now())
+}
+
+// ----------------------------------------------------
+// MÓDULO 1: Acompanhamento Semestral
+// ----------------------------------------------------
+
+enum CycleStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  CLOSED
+}
+
+model IndicatorCycle {
+  id             String          @id @default(uuid())
+  semester       String          // Ex: "2026.1", "2026.2"
+  status         CycleStatus     @default(DRAFT)
+  notes          String?         // Notas de encerramento da reunião
+  meetingDate    DateTime?
+  organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  reviewerId     String?
+  reviewer       User?           @relation("ReviewerRelation", fields: [reviewerId], references: [id])
+  
+  indicators     Indicator[]
+  updatedAt      DateTime        @updatedAt
+}
+
+model Indicator {
+  id       String         @id @default(uuid())
+  cycleId  String
+  cycle    IndicatorCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  key      String         // Ex: "Faturamento", "NumeroMembros", "NPS"
+  value    Float
+}
+
+// ----------------------------------------------------
+// MÓDULO 2: Auditoria e Certificação
+// ----------------------------------------------------
+
+enum AuditStatus {
+  SCHEDULED
+  DOCUMENTS_SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+model Audit {
+  id             String          @id @default(uuid())
+  year           Int
+  status         AuditStatus     @default(SCHEDULED)
+  score          Float?          // Pontuação ponderada calculada
+  organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  
+  documents      AuditDocument[]
+  updatedAt      DateTime        @updatedAt
+}
+
+model AuditDocument {
+  id          String   @id @default(uuid())
+  auditId     String
+  audit       Audit    @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  name        String   // Nome do documento exigido (ex: "Estatutos")
+  fileUrl     String?  // URL do ficheiro no Storage
+  isApproved  Boolean? // null = pendente, true = aprovado, false = rejeitado
+  feedback    String?
+}
+
+// ----------------------------------------------------
+// MÓDULO 3: Censos Anuais
+// ----------------------------------------------------
+
+model Census {
+  id        String   @id @default(uuid())
+  year      Int
+  data      Json     // Dados dinâmicos do censo (estrutura de membros, faturamento detalhado, etc.)
+  submitted Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ----------------------------------------------------
+// MÓDULO 4: jeniAL (Candidaturas a Prémios)
+// ----------------------------------------------------
+
+model JeniALApplication {
+  id           String   @id @default(uuid())
+  category     String   // Ex: "Júnior Empresa do Ano", "Júnior Iniciativa Mais Promissora"
+  documentUrl  String   // Proposta de candidatura
+  videoUrl     String?  
+  score        Float?
+  feedback     String?
+  submittedAt  DateTime @default(now())
+}
+
+// ----------------------------------------------------
+// MÓDULO 5: Candidaturas a Eventos (Organização)
+// ----------------------------------------------------
+
+model EventApplication {
+  id             String       @id @default(uuid())
+  eventName      String       // Ex: "JENC 2027", "jeniAL 2026"
+  concept        String       // Descrição da proposta de conceito
+  logisticsUrl   String       // Ficheiro da proposta logística (PDF)
+  budgetUrl      String       // Ficheiro do orçamento previsto (XLSX)
+  isApproved     Boolean?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  submittedAt    DateTime     @default(now())
+}
+
+// ----------------------------------------------------
+// MÓDULO 6: Comunicação Oficial (Registo de Leitura)
+// ----------------------------------------------------
+
+model Announcement {
+  id        String             @id @default(uuid())
+  title     String
+  content   String
+  createdAt DateTime           @default(now())
+  
+  reads     AnnouncementRead[]
+}
+
+model AnnouncementRead {
+  id             String       @id @default(uuid())
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readAt         DateTime     @default(now())
+
+  @@unique([announcementId, userId]) // Garante registo único por utilizador
+}
+
+// ----------------------------------------------------
+// MÓDULO 7: Metas e Objetivos Organizacionais
+// ----------------------------------------------------
+
+model Objective {
+  id             String       @id @default(uuid())
+  title          String       // Ex: "Faturar 15.000€"
+  targetValue    Float
+  currentValue   Float        @default(0)
+  year           Int
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
 }
