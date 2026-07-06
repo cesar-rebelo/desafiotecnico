@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-export default function FormularioCiclo({ selectedJE, onSubmit, onClose }) {
+export default function FormularioCiclo({ selectedJE, onSubmit, onClose, initialValues }) {
   const [form, setForm] = useState({ faturamento: '', membros: '', nps: '', semester: '2026.1' });
+
+  useEffect(() => {
+    setForm(initialValues || { faturamento: '', membros: '', nps: '', semester: '2026.1' });
+  }, [initialValues, selectedJE.id]);
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   const handle = (e) => {

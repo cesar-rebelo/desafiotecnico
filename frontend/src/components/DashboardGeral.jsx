@@ -4,7 +4,7 @@ import CardMetrica from './CardMetrica';
 
 export default function DashboardGeral({ data, getStatusBadge, onCreateJE, newJE, setNewJE, onUpdateJE, onDeleteJE }) {
   const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm]   = useState({ name: '', status: 'JUNIOR_INITIATIVE' });
+  const [editForm, setEditForm] = useState({ name: '', status: 'JUNIOR_INITIATIVE' });
 
   const startEdit = (org) => {
     setEditingId(org.id);
@@ -31,16 +31,16 @@ export default function DashboardGeral({ data, getStatusBadge, onCreateJE, newJE
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Bom dia, Equipa IT 👋</h1>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Bom dia, JE Portugal </h1>
         <p className="text-sm text-gray-400 mt-1.5">Resumo consolidado do Mandato 2026/2027 — Movimento Júnior Português.</p>
       </div>
 
       {/* Métricas */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-        <CardMetrica label="Organizações na Rede"   value={data.metrics.totalOrganizations} icon={<Building2 className="w-4 h-4 text-indigo-500" />} trend="up" trendLabel="activas" />
-        <CardMetrica label="Auditorias Pendentes"   value={data.metrics.pendingAudits}       icon={<Scale     className="w-4 h-4 text-amber-500"  />} />
-        <CardMetrica label="Ciclos Semestrais Ativos" value={data.metrics.activeCycles}      icon={<RefreshCw className="w-4 h-4 text-emerald-500"/>} trend="up" trendLabel="em curso" />
-        <CardMetrica label="Comunicados na Rede"    value={data.metrics.comunicadosNaoLidos} icon={<MessageSquare className="w-4 h-4 text-rose-500" />} />
+        <CardMetrica label="Organizações na Rede" value={data.metrics.totalOrganizations} icon={<Building2 className="w-4 h-4 text-indigo-500" />} trend="up" trendLabel="ativas" />
+        <CardMetrica label="Auditorias Pendentes" value={data.metrics.pendingAudits} icon={<Scale className="w-4 h-4 text-amber-500" />} />
+        <CardMetrica label="Ciclos Semestrais Ativos" value={data.metrics.activeCycles} icon={<RefreshCw className="w-4 h-4 text-emerald-500" />} trend="up" trendLabel="em curso" />
+        <CardMetrica label="Comunicados na Rede" value={data.metrics.comunicadosNaoLidos} icon={<MessageSquare className="w-4 h-4 text-rose-500" />} />
       </div>
 
       {/* Corpo */}
