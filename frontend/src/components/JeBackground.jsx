@@ -68,7 +68,8 @@ export default function JeBackground() {
                 return (
                   <img
                     key={rowIdx}
-                    src="/je-outline.png"
+                    // Adicionado cache-buster ?v=2 para forçar o browser a recarregar a imagem do contorno cinzento
+                    src="/je-outline.png?v=2"
                     alt=""
                     style={{
                       position: 'absolute',
@@ -76,7 +77,7 @@ export default function JeBackground() {
                       left: 0,
                       width: '46px',
                       height: 'auto',
-                      opacity: 0.28, // Opacidade aumentada para garantir visibilidade excelente
+                      opacity: 0.28,
                       filter: 'grayscale(1)',
                     }}
                   />
