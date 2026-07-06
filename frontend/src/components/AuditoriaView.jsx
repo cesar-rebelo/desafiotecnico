@@ -1,111 +1,96 @@
 import { useState } from 'react';
-import { 
-  ClipboardCheck, AlertCircle, FileText, CheckCircle2, 
-  HelpCircle, UploadCloud, Info, Trash2 
-} from 'lucide-react';
+import { ClipboardCheck, CheckCircle2, AlertCircle, Clock, UploadCloud, FileText } from 'lucide-react';
 
-export default function AuditoriaView({ data }) {
-  const [selectedAudit, setSelectedAudit] = useState(null);
-  
-  // Lista fictícia de requisitos de documentos de auditoria
-  const [documents, setDocuments] = useState([
-    { id: '1', name: 'Registo de Atividade Semestral', required: true, status: 'APPROVED', file: 'atividade.pdf' },
-    { id: '2', name: 'Relatório de Contas Aprovado', required: true, status: 'DOCUMENTS_SUBMITTED', file: 'contas_2025.xlsx' },
-    { id: '3', name: 'Documento de Conformidade RGPD', required: true, status: 'SCHEDULED', file: null },
-    { id: '4', name: 'Ata da Assembleia Geral Eleitoral', required: false, status: 'REJECTED', file: 'ata_eleicao.pdf', feedback: 'Documento cortado na página 3.' }
-  ]);
+const initialDocs = [
+  { id: '1', name: 'Registo de Atividade Semestral',      required: true,  status: 'APPROVED',            file: 'atividade.pdf',    feedback: null },
+  { id: '2', name: 'Relatório de Contas Aprovado',        required: true,  status: 'DOCUMENTS_SUBMITTED', file: 'contas_2025.xlsx', feedback: null },
+  { id: '3', name: 'Conformidade RGPD',                   required: true,  status: 'SCHEDULED',           file: null,               feedback: null },
+  { id: '4', name: 'Ata da Assembleia Geral Eleitoral',   required: false, status: 'REJECTED',            file: 'ata.pdf',          feedback: 'Documento incompleto na p.3.' },
+];
 
-  const handleStatusChange = (id, action) => {
-    setDocuments(prev => prev.map(doc => {
-      if (doc.id === id) {
-        return {
-          ...doc,
-          status: action === 'approve' ? 'APPROVED' : 'REJECTED',
-          feedback: action === 'reject' ? 'Documentação incorreta ou incompleta.' : null
-        };
-      }
-      return doc;
-    }));
-  };
+const STATUS_CONFIG = {
+  APPROVED:            { label: 'Aprovado',          icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50 text-emerald-700' },
+  DOCUMENTS_SUBMITTED: { label: 'Em Análise',        icon: Clock,        color: 'text-amber-400',   bg: 'bg-amber-50 text-amber-700' },
+  SCHEDULED:           { label: 'Pendente',          icon: Clock,        color: 'text-gray-400',    bg: 'bg-gray-100 text-gray-500' },
+  REJECTED:            { label: 'Rejeitado',         icon: AlertCircle,  color: 'text-red-500',     bg: 'bg-red-50 text-red-600' },
+};
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'APPROVED': return <CheckCircle2 className="w-5 h-5 text-emerald-400" />;
-      case 'DOCUMENTS_SUBMITTED': return <Info className="w-5 h-5 text-amber-400 animate-pulse" />;
-      case 'REJECTED': return <AlertCircle className="w-5 h-5 text-rose-400" />;
-      default: return <ClockIcon />;
-    }
-  };
+export default function AuditoriaView() {
+  const [docs, setDocs] = useState(initialDocs);
 
-  const ClockIcon = () => (
-    <span className="w-5 h-5 border-2 border-slate-700 border-t-slate-400 rounded-full animate-spin" />
-  );
+  const act = (id, next) => setDocs(prev => prev.map(d =>
+    d.id === id
+      ? { ...d, status: next, feedback: next === 'REJECTED' ? 'Documentação incorreta ou incompleta.' : null }
+      : d
+  ));
+
+  const approved  = docs.filter(d => d.status === 'APPROVED').length;
+  const total     = docs.filter(d => d.required).length;
+  const score     = Math.round((approved / initialDocs.length) * 100);
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-7 animate-fadeUp">
       <div>
-        <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2.5">
-          <ClipboardCheck className="w-6 h-6 text-indigo-400" />
-          Módulo 2: Auditoria e Certificação
-        </h2>
-        <p className="text-sm text-slate-400">Coordene a auditoria das Júnior Empresas. Valide documentos, calcule pontuações e atribua a certificação.</p>
+        <h1 className="text-[22px] font-bold text-gray-900 tracking-tight">Auditoria & Certificação</h1>
+        <p className="text-sm text-gray-400 mt-0.5">Submissão e validação de documentos para certificação de qualidade da rede.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Lista de Documentos Exigidos */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-[#111827]/40 border border-slate-800/80 rounded-2xl p-6 shadow-xl backdrop-blur-sm space-y-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="text-md font-bold text-white">Documentos de Qualidade</h3>
-                <p className="text-xs text-slate-400">Verifique as submissões de documentos obrigatórios para auditoria.</p>
-              </div>
-              <button className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center gap-1.5">
-                <UploadCloud className="w-4 h-4" />
-                Submeter Novo
-              </button>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Documentos */}
+        <div className="lg:col-span-2 bg-white border border-gray-100 rounded-2xl overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
+            <div>
+              <h3 className="text-[14px] font-semibold text-gray-800">Documentos Exigidos</h3>
+              <p className="text-[11px] text-gray-400">{approved} de {initialDocs.length} aprovados</p>
             </div>
+            <button className="flex items-center gap-1.5 text-[12px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
+              <UploadCloud className="w-4 h-4" />
+              Submeter
+            </button>
+          </div>
 
-            <div className="space-y-3.5">
-              {documents.map((doc) => (
-                <div key={doc.id} className="p-4 bg-slate-900/35 border border-slate-800/80 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all">
+          <div className="divide-y divide-gray-50">
+            {docs.map((doc) => {
+              const cfg  = STATUS_CONFIG[doc.status] ?? STATUS_CONFIG.SCHEDULED;
+              const Icon = cfg.icon;
+              return (
+                <div key={doc.id} className="px-6 py-4 hover:bg-gray-50/40 transition-colors">
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-slate-800/80 border border-slate-700/60 rounded-lg mt-0.5">
-                      <FileText className="w-4 h-4 text-slate-400" />
+                    <div className="p-1.5 bg-gray-50 border border-gray-100 rounded-lg mt-0.5">
+                      <FileText className="w-3.5 h-3.5 text-gray-400" />
                     </div>
-                    <div>
-                      <h4 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-                        {doc.name}
-                        {doc.required && <span className="text-[9px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-1.5 py-0.5 rounded font-bold uppercase">Obrigatório</span>}
-                      </h4>
-                      <p className="text-xs text-slate-500 font-medium">
-                        {doc.file ? `Ficheiro: ${doc.file}` : 'Nenhum ficheiro anexado'}
-                      </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-[13px] font-semibold text-gray-800">{doc.name}</p>
+                        {doc.required && (
+                          <span className="text-[9px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded">
+                            Obrigatório
+                          </span>
+                        )}
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${cfg.bg}`}>
+                          {cfg.label}
+                        </span>
+                      </div>
+                      {doc.file && (
+                        <p className="text-[11px] text-gray-400 mt-0.5">{doc.file}</p>
+                      )}
                       {doc.feedback && (
-                        <p className="text-xs text-rose-400 bg-rose-500/5 border border-rose-500/10 px-2.5 py-1 rounded-lg mt-2">
-                          Feedback: {doc.feedback}
+                        <p className="text-[11px] text-red-500 mt-1 bg-red-50 px-2 py-1 rounded-lg inline-block">
+                          {doc.feedback}
                         </p>
                       )}
                     </div>
-                  </div>
-
-                  {/* Ações de validação rápida */}
-                  <div className="flex items-center gap-3.5 self-end md:self-center">
-                    <div className="flex items-center gap-1.5">
-                      {getStatusIcon(doc.status)}
-                    </div>
-
                     {doc.status === 'DOCUMENTS_SUBMITTED' && (
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => handleStatusChange(doc.id, 'approve')}
-                          className="px-2.5 py-1 bg-emerald-600/15 border border-emerald-500/30 text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-600 hover:text-white transition-all"
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => act(doc.id, 'APPROVED')}
+                          className="text-[11px] font-semibold text-emerald-600 hover:underline"
                         >
                           Aprovar
                         </button>
-                        <button 
-                          onClick={() => handleStatusChange(doc.id, 'reject')}
-                          className="px-2.5 py-1 bg-rose-600/15 border border-rose-500/30 text-rose-400 rounded-lg text-xs font-bold hover:bg-rose-600 hover:text-white transition-all"
+                        <button
+                          onClick={() => act(doc.id, 'REJECTED')}
+                          className="text-[11px] font-semibold text-red-500 hover:underline"
                         >
                           Rejeitar
                         </button>
@@ -113,35 +98,35 @@ export default function AuditoriaView({ data }) {
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Informações da Auditoria e Score */}
-        <div className="space-y-6">
-          <div className="bg-[#111827]/40 border border-slate-800/80 p-6 rounded-2xl shadow-xl backdrop-blur-sm space-y-4">
-            <h3 className="text-md font-bold text-white flex items-center gap-1.5">
-              <Info className="w-4 h-4 text-violet-400" />
-              Critérios de Certificação
-            </h3>
-            <p className="text-xs text-slate-400">
-              Para obter o selo de Júnior Empresa de qualidade da JE Portugal, a organização deve obter aprovação em todos os documentos obrigatórios e atingir um score superior a 70%.
-            </p>
-
-            <div className="border border-slate-800 rounded-xl p-4 bg-slate-900/10 space-y-3">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400">Score Atual Estimado</span>
-                <span className="font-bold text-indigo-400 text-lg">84.5%</span>
+        {/* Score Card */}
+        <div className="space-y-5">
+          <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
+            <h3 className="text-[13px] font-semibold text-gray-800">Pontuação Estimada</h3>
+            <div className="text-center py-4">
+              <p className="text-4xl font-bold text-indigo-600">{score}%</p>
+              <p className="text-[11px] text-gray-400 mt-1">
+                {score >= 70 ? '✅ Aprovada para certificação' : '⚠️ Abaixo do mínimo (70%)'}
+              </p>
+            </div>
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full ${score >= 70 ? 'bg-indigo-500' : 'bg-amber-400'}`}
+                style={{ width: `${score}%` }}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="text-center p-3 bg-gray-50 rounded-xl">
+                <p className="text-lg font-bold text-gray-800">{approved}</p>
+                <p className="text-[10px] text-gray-400">Aprovados</p>
               </div>
-              <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                <div className="bg-gradient-to-r from-violet-600 to-indigo-600 h-full rounded-full" style={{ width: '84.5%' }} />
-              </div>
-              <div className="flex justify-between items-center text-[10px] text-slate-500">
-                <span>Mínimo: 70%</span>
-                <span className="text-emerald-400 font-semibold flex items-center gap-0.5">
-                  <CheckCircle2 className="w-3 h-3" /> Aprovada para Auditoria
-                </span>
+              <div className="text-center p-3 bg-gray-50 rounded-xl">
+                <p className="text-lg font-bold text-gray-800">{docs.filter(d => d.status === 'REJECTED').length}</p>
+                <p className="text-[10px] text-gray-400">Rejeitados</p>
               </div>
             </div>
           </div>
