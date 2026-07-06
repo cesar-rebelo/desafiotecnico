@@ -49,9 +49,9 @@ export default function AuditoriaView({ data, onAuditChange, onRejectDoc }) {
     }
   };
 
-  const handleReject = (docId, docName) => {
+  const handleReject = (docId, docName, currentFeedback) => {
     if (onRejectDoc) {
-      onRejectDoc(docId, docName, () => fetchAudit(selectedOrgId));
+      onRejectDoc(docId, docName, () => fetchAudit(selectedOrgId), currentFeedback);
     }
   };
 
@@ -155,7 +155,7 @@ export default function AuditoriaView({ data, onAuditChange, onRejectDoc }) {
                       
                       {/* Controlos de aprovação pelo Auditor / Ações do Utilizador */}
                       <div className="flex items-center gap-3.5 shrink-0 self-center">
-                        {!doc.fileUrl || doc.isApproved === false ? (
+                        {!doc.fileUrl ? (
                           <button
                             onClick={() => handleSubmitDoc(doc.id)}
                             className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-[10px] font-bold rounded-lg transition-colors focus:outline-none"
@@ -164,6 +164,14 @@ export default function AuditoriaView({ data, onAuditChange, onRejectDoc }) {
                           </button>
                         ) : (
                           <>
+                            {doc.isApproved === false && (
+                              <button
+                                onClick={() => handleSubmitDoc(doc.id)}
+                                className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-[10px] font-bold rounded-lg transition-colors focus:outline-none"
+                              >
+                                Submeter Ficheiro
+                              </button>
+                            )}
                             <button
                               onClick={() => handleApprove(doc.id)}
                               disabled={doc.isApproved === true}
@@ -176,7 +184,7 @@ export default function AuditoriaView({ data, onAuditChange, onRejectDoc }) {
                               Aprovar
                             </button>
                             <button
-                              onClick={() => handleReject(doc.id, doc.name)}
+                              onClick={() => handleReject(doc.id, doc.name, doc.feedback)}
                               className="text-[11px] font-semibold text-red-500 hover:text-red-600 hover:underline"
                             >
                               Rejeitar

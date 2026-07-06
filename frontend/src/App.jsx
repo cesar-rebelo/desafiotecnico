@@ -160,13 +160,13 @@ export default function App() {
     }
   };
 
-  const handleRejectDoc = (docId, docName, onDone) => {
+  const handleRejectDoc = (docId, docName, onDone, currentFeedback) => {
     setPromptData({
       isOpen: true,
       title: 'Rejeitar Documento',
       message: `Indique o motivo da rejeição do documento "${docName}":`,
       placeholder: 'Escreva o feedback explicativo aqui...',
-      defaultValue: '',
+      defaultValue: currentFeedback || '',
       onConfirm: async (feedback) => {
         if (!feedback.trim()) return;
         try {
