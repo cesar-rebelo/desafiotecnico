@@ -10,6 +10,7 @@ import CensosView from './components/CensosView';
 import ComunicacaoView from './components/ComunicacaoView';
 import JeBackground from './components/JeBackground';
 import ConfirmModal from './components/ConfirmModal';
+import PromptModal from './components/PromptModal';
 
 const MOCK_DATA = {
   metrics: { totalOrganizations: 0, pendingAudits: 0, activeCycles: 0, comunicadosNaoLidos: 0 },
@@ -57,6 +58,16 @@ export default function App() {
     isOpen: false,
     title: '',
     message: '',
+    onConfirm: () => {},
+  });
+
+  // Estado para o Pop-up customizado de feedback/prompt
+  const [promptData, setPromptData] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    placeholder: '',
+    defaultValue: '',
     onConfirm: () => {},
   });
 
@@ -149,6 +160,26 @@ export default function App() {
     }
   };
 
+  const handleRejectDoc = (docId, docName, onDone) => {
+    setPromptData({
+      isOpen: true,
+      title: 'Rejeitar Documento',
+      message: `Indique o motivo da rejeição do documento "${docName}":`,
+      placeholder: 'Escreva o feedback explicativo aqui...',
+      defaultValue: '',
+      onConfirm: async (feedback) => {
+        if (!feedback.trim()) return;
+        try {
+          await api.updateAuditDocument(docId, false, feedback.trim());
+          await refreshData();
+          if (onDone) onDone();
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    });
+  };
+
   const PAGE_TITLES = {
     dashboard: 'Visão Geral',
     acompanhamento: 'Acompanhamento',
@@ -212,7 +243,7 @@ export default function App() {
                 />
                 <Route
                   path="/auditoria"
-                  element={<AuditoriaView data={data} onAuditChange={refreshData} />}
+                  element={<AuditoriaView data={data} onAuditChange={refreshData} onRejectDoc={handleRejectDoc} />}
                 />
                 <Route path="/censos" element={<CensosView />} />
                 <Route
@@ -239,6 +270,17 @@ export default function App() {
         message={confirmData.message}
         onConfirm={confirmData.onConfirm}
         onCancel={() => setConfirmData(p => ({ ...p, isOpen: false }))}
+      />
+
+      {/* Pop-up de feedback/prompt customizado */}
+      <PromptModal
+        isOpen={promptData.isOpen}
+        title={promptData.title}
+        message={promptData.message}
+        placeholder={promptData.placeholder}
+        defaultValue={promptData.defaultValue}
+        onConfirm={promptData.onConfirm}
+        onCancel={() => setPromptData(p => ({ ...p, isOpen: false }))}
       />
     </>
   );

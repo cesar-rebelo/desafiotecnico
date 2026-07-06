@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle2, AlertCircle, Clock, ChevronDown } from 'lucide-react';
 import { api } from '../services/api';
-import PromptModal from './PromptModal';
 
 const STATUS = {
   APPROVED:            { label: 'Aprovado',   icon: CheckCircle2, cls: 'text-emerald-500', pill: 'bg-emerald-50 text-emerald-700' },
@@ -10,20 +9,10 @@ const STATUS = {
   REJECTED:            { label: 'Rejeitado',  icon: AlertCircle,  cls: 'text-red-500',    pill: 'bg-red-50 text-red-600' },
 };
 
-export default function AuditoriaView({ data, onAuditChange }) {
+export default function AuditoriaView({ data, onAuditChange, onRejectDoc }) {
   const [selectedOrgId, setSelectedOrgId] = useState('');
   const [audit, setAudit]                 = useState(null);
   const [loading, setLoading]             = useState(false);
-
-  // Estado para o Pop-up customizado de feedback/prompt
-  const [promptData, setPromptData] = useState({
-    isOpen: false,
-    title: '',
-    message: '',
-    placeholder: '',
-    defaultValue: '',
-    onConfirm: () => {},
-  });
 
   // Inicializar com a primeira organização se disponível
   useEffect(() => {
@@ -61,23 +50,9 @@ export default function AuditoriaView({ data, onAuditChange }) {
   };
 
   const handleReject = (docId, docName) => {
-    setPromptData({
-      isOpen: true,
-      title: 'Rejeitar Documento',
-      message: `Indique o motivo da rejeição do documento "${docName}":`,
-      placeholder: 'Escreva o feedback explicativo aqui...',
-      defaultValue: '',
-      onConfirm: async (feedback) => {
-        if (!feedback.trim()) return;
-        try {
-          await api.updateAuditDocument(docId, false, feedback.trim());
-          await fetchAudit(selectedOrgId);
-          if (onAuditChange) onAuditChange();
-        } catch (err) {
-          console.error(err);
-        }
-      }
-    });
+    if (onRejectDoc) {
+      onRejectDoc(docId, docName, () => fetchAudit(selectedOrgId));
+    }
   };
 
   const handleSubmitDoc = async (docId) => {
@@ -241,17 +216,6 @@ export default function AuditoriaView({ data, onAuditChange }) {
           </div>
         </div>
       )}
-
-      {/* Pop-up de feedback customizado */}
-      <PromptModal
-        isOpen={promptData.isOpen}
-        title={promptData.title}
-        message={promptData.message}
-        placeholder={promptData.placeholder}
-        defaultValue={promptData.defaultValue}
-        onConfirm={promptData.onConfirm}
-        onCancel={() => setPromptData(p => ({ ...p, isOpen: false }))}
-      />
     </div>
   );
 }
