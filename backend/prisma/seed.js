@@ -1,20 +1,37 @@
-import prisma from '../src/lib/prisma.js';
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
+import 'dotenv/config';
+
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  if (!prisma) {
-    throw new Error('Prisma Client failed to initialize. Check DATABASE_URL.');
-  }
-
   console.log('Clearing database...');
   await prisma.announcementRead.deleteMany({});
   await prisma.announcement.deleteMany({});
   await prisma.objective.deleteMany({});
   await prisma.auditDocument.deleteMany({});
   await prisma.audit.deleteMany({});
+  await prisma.auditTopic.deleteMany({});
   await prisma.indicator.deleteMany({});
   await prisma.indicatorCycle.deleteMany({});
   await prisma.user.deleteMany({});
   await prisma.organization.deleteMany({});
+
+  console.log('Seeding audit topics...');
+  const topics = [
+    { name: 'Registo de Atividade Semestral', required: true },
+    { name: 'Relatório de Contas', required: true },
+    { name: 'Estatutos Atualizados', required: true },
+    { name: 'Ata da Assembleia Geral', required: true }
+  ];
+  for (const t of topics) {
+    await prisma.auditTopic.create({
+      data: t
+    });
+  }
 
   console.log('Seeding organizations...');
   

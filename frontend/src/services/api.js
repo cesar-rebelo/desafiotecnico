@@ -86,5 +86,35 @@ export const api = {
     });
     if (!res.ok) throw new Error('Erro ao submeter documento de auditoria');
     return res.json();
+  },
+  getAuditTopics: async () => {
+    const res = await fetch(`${API_URL}/audits/topics`);
+    if (!res.ok) throw new Error('Erro ao obter tópicos de auditoria');
+    return res.json();
+  },
+  createAuditTopic: async (topicData) => {
+    const res = await fetch(`${API_URL}/audits/topics`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(topicData)
+    });
+    if (!res.ok) throw new Error('Erro ao criar tópico de auditoria');
+    return res.json();
+  },
+  updateAuditTopic: async (id, topicData) => {
+    const res = await fetch(`${API_URL}/audits/topics/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(topicData)
+    });
+    if (!res.ok) throw new Error('Erro ao alterar tópico de auditoria');
+    return res.json();
+  },
+  deleteAuditTopic: async (id) => {
+    const res = await fetch(`${API_URL}/audits/topics/${id}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Erro ao remover tópico de auditoria');
+    return res.json();
   }
 };

@@ -119,6 +119,13 @@ model AuditDocument {
   feedback    String?
 }
 
+model AuditTopic {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  required  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
 // ----------------------------------------------------
 // MÓDULO 3: Censos Anuais
 // ----------------------------------------------------

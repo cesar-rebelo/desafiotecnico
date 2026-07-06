@@ -11,6 +11,7 @@ import ComunicacaoView from './components/ComunicacaoView';
 import JeBackground from './components/JeBackground';
 import ConfirmModal from './components/ConfirmModal';
 import PromptModal from './components/PromptModal';
+import BackofficeView from './components/BackofficeView';
 
 const MOCK_DATA = {
   metrics: { totalOrganizations: 0, pendingAudits: 0, activeCycles: 0, comunicadosNaoLidos: 0 },
@@ -186,6 +187,7 @@ export default function App() {
     auditoria: 'Auditoria',
     censos: 'Censos Anuais',
     comunicacao: 'Comunicação',
+    backoffice: 'Backoffice',
   };
 
   const activePath = location.pathname.substring(1) || 'dashboard';
@@ -229,11 +231,6 @@ export default function App() {
                     <DashboardGeral
                       data={data}
                       getStatusBadge={getStatusBadge}
-                      onCreateJE={handleCreateJE}
-                      newJE={newJE}
-                      setNewJE={setNewJE}
-                      onUpdateJE={handleUpdateJE}
-                      onDeleteJE={handleDeleteJE}
                     />
                   }
                 />
@@ -253,6 +250,20 @@ export default function App() {
                       announcements={data.announcements}
                       onPublish={handlePublishAnnouncement}
                       onDelete={handleDeleteAnnouncement}
+                    />
+                  }
+                />
+                <Route
+                  path="/backoffice"
+                  element={
+                    <BackofficeView
+                      data={data}
+                      onCreateJE={handleCreateJE}
+                      newJE={newJE}
+                      setNewJE={setNewJE}
+                      onUpdateJE={handleUpdateJE}
+                      onDeleteJE={handleDeleteJE}
+                      onAuditChange={refreshData}
                     />
                   }
                 />

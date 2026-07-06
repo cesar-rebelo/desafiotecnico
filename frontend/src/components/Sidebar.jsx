@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, TrendingUp, ClipboardCheck, FileText, Mail, LogOut, X } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, ClipboardCheck, FileText, Mail, LogOut, X, Sliders } from 'lucide-react';
 
 const items = [
   { to: '/dashboard',      label: 'Visão Geral',   icon: LayoutDashboard },
@@ -76,6 +76,25 @@ export default function Sidebar({ isOpen, setIsOpen }) {
 
         {/* Footer */}
         <div className="px-4 pb-6 pt-4">
+          <NavLink
+            to="/backoffice"
+            onClick={() => setIsOpen(false)}
+            className={({ isActive }) =>
+              `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 text-left mb-2.5 ${
+                isActive
+                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
+                  : 'text-gray-500 hover:bg-gray-100/70 hover:text-gray-800'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Sliders className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                Backoffice
+              </>
+            )}
+          </NavLink>
+
           <div className="mx-1 border-t border-gray-100 mb-4" />
           <div className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 cursor-pointer transition-all group">
             <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600">IT</div>
