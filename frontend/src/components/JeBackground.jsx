@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 
 export default function JeBackground() {
-  const [dimensions, setDimensions] = useState({ cols: 25, rows: 20 });
+  const [dimensions, setDimensions] = useState({ cols: 40, rows: 35 });
 
-  // Valores de espaçamento reduzidos para aproximar muito mais os elementos
-  const COL_W = 80;  // largura de cada coluna (anteriormente 140)
-  const GAP_Y = 100; // espaço vertical entre logos (anteriormente 180)
+  // Valores de espaçamento extremamente reduzidos para que fiquem quase colados
+  const COL_W = 55; // largura de cada coluna (anteriormente 80)
+  const GAP_Y = 48; // espaço vertical entre logos (anteriormente 100)
 
   // Ajustar colunas e linhas baseadas no tamanho do ecrã para cobrir totalmente sem quebras
   useEffect(() => {
@@ -13,8 +13,8 @@ export default function JeBackground() {
       const w = window.innerWidth * 1.5;
       const h = window.innerHeight * 1.5;
       setDimensions({
-        cols: Math.max(20, Math.ceil(w / COL_W) + 2),
-        rows: Math.max(15, Math.ceil(h / GAP_Y) + 2)
+        cols: Math.max(35, Math.ceil(w / COL_W) + 2),
+        rows: Math.max(25, Math.ceil(h / GAP_Y) + 2)
       });
     };
 
@@ -74,9 +74,9 @@ export default function JeBackground() {
                       position: 'absolute',
                       top: `${y}px`,
                       left: 0,
-                      width: '40px', // Reduzido ligeiramente de 46px para 40px para harmonizar com a proximidade
+                      width: '45px', // Tamanho ideal para quase se tocarem com COL_W=55 e GAP_Y=48
                       height: 'auto',
-                      opacity: 0.22, // Opacidade equilibrada para contorno
+                      opacity: 0.42, // Opacidade aumentada significativa a pedido do utilizador
                       filter: 'grayscale(1)',
                     }}
                   />
@@ -98,15 +98,15 @@ export default function JeBackground() {
 
       <style>{`
         .je-grid-scroller {
-          animation: diagonalGridScroll 40s linear infinite;
+          animation: diagonalGridScroll 35s linear infinite;
         }
         @keyframes diagonalGridScroll {
           0% {
             transform: translate(0, 0);
           }
           100% {
-            /* COL_W * 2 = 160px, GAP_Y = 100px para repetição perfeitamente seamless */
-            transform: translate(-160px, 100px);
+            /* COL_W * 2 = 110px, GAP_Y = 48px para repetição perfeitamente seamless */
+            transform: translate(-110px, 48px);
           }
         }
       `}</style>
