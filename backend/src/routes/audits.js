@@ -39,7 +39,7 @@ router.get('/:orgId', async (req, res) => {
               name,
               isApproved: null,
               feedback: null,
-              fileUrl: `/uploads/${name.toLowerCase().replace(/ /g, '_')}.pdf` // URL fictício de upload
+              fileUrl: null
             }))
           }
         },
