@@ -20,6 +20,38 @@ export const api = {
     if (!res.ok) throw new Error('Erro ao criar organização');
     return res.json();
   },
+  updateOrganization: async (id, orgData) => {
+    const res = await fetch(`${API_URL}/organizations/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orgData)
+    });
+    if (!res.ok) throw new Error('Erro ao editar organização');
+    return res.json();
+  },
+  deleteOrganization: async (id) => {
+    const res = await fetch(`${API_URL}/organizations/${id}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Erro ao eliminar organização');
+    return res.json();
+  },
+  createAnnouncement: async (annData) => {
+    const res = await fetch(`${API_URL}/announcements`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(annData)
+    });
+    if (!res.ok) throw new Error('Erro ao criar comunicado');
+    return res.json();
+  },
+  deleteAnnouncement: async (id) => {
+    const res = await fetch(`${API_URL}/announcements/${id}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Erro ao eliminar comunicado');
+    return res.json();
+  },
   submitIndicators: async (data) => {
     const res = await fetch(`${API_URL}/acompanhamento/indicadores`, {
       method: 'POST',

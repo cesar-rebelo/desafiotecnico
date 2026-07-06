@@ -51,9 +51,9 @@ export default function AcompanhamentoView({ data, onIndicatorSubmit }) {
           <h2 className="text-[14px] font-semibold text-gray-700 mb-4">Metas Semestrais</h2>
           <div className="space-y-6">
             {[
-              { label: 'Faturamento (€)',     current: 8240,  target: 15000, icon: <DollarSign className="w-3.5 h-3.5 text-indigo-400" /> },
-              { label: 'Membros Capacitados', current: 240,   target: 500,   icon: <Users      className="w-3.5 h-3.5 text-indigo-400" /> },
-              { label: 'NPS Médio (%)',        current: 82,    target: 90,    icon: <Target     className="w-3.5 h-3.5 text-indigo-400" /> },
+              { label: 'Faturamento (€)',     current: data.metrics.totalFaturamento || 0,  target: 15000, icon: <DollarSign className="w-3.5 h-3.5 text-indigo-400" /> },
+              { label: 'Membros Capacitados', current: data.metrics.totalMembros || 0,   target: 500,   icon: <Users      className="w-3.5 h-3.5 text-indigo-400" /> },
+              { label: 'NPS Médio (%)',        current: data.metrics.averageNps || 0,    target: 90,    icon: <Target     className="w-3.5 h-3.5 text-indigo-400" /> },
             ].map((m) => {
               const pct = Math.min(100, Math.round((m.current / m.target) * 100));
               return (

@@ -1,16 +1,34 @@
-import { useState } from 'react';
-import { Send, CheckCircle2, Circle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Send, CheckCircle2, Circle, Trash2 } from 'lucide-react';
 
-export default function ComunicacaoView({ announcements: initial }) {
-  const [items,   setItems]   = useState(initial.map(a => ({ ...a, read: false })));
-  const [title,   setTitle]   = useState('');
+export default function ComunicacaoView({ announcements: initial, onPublish, onDelete }) {
+  const [items, setItems] = useState([]);
+  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
 
-  const toggle  = (id) => setItems(p => p.map(a => a.id === id ? { ...a, read: !a.read } : a));
+  // Sincronizar o estado local sempre que a lista de comunicados no pai (banco de dados) for alterada
+  useEffect(() => {
+    setItems(prev => {
+      return initial.map(newAnn => {
+        const existing = prev.find(p => p.id === newAnn.id);
+        return {
+          ...newAnn,
+          read: existing ? existing.read : false
+        };
+      });
+    });
+  }, [initial]);
+
+  const toggle = (id) => {
+    setItems(p => p.map(a => a.id === id ? { ...a, read: !a.read } : a));
+  };
+
   const publish = (e) => {
     e.preventDefault();
-    setItems(p => [{ id: Date.now().toString(), title, content, date: new Date().toISOString().split('T')[0], read: false }, ...p]);
-    setTitle(''); setContent('');
+    if (!title.trim()) return;
+    onPublish(title.trim(), content.trim());
+    setTitle('');
+    setContent('');
   };
 
   const unread = items.filter(a => !a.read).length;
@@ -33,29 +51,51 @@ export default function ComunicacaoView({ announcements: initial }) {
         {/* Feed */}
         <div className="lg:col-span-2">
           <h2 className="text-[14px] font-semibold text-gray-700 mb-5">Mural de Avisos</h2>
-          <div className="bg-white/75 backdrop-blur-sm border border-white/90 rounded-2xl overflow-hidden">
-            {items.length === 0 && (
-              <p className="px-6 py-10 text-center text-[13px] text-gray-300">Sem comunicados de momento.</p>
-            )}
-            {items.map((ann, i) => (
-              <div key={ann.id}
-                className={`flex items-start gap-4 px-6 py-4.5 hover:bg-gray-50/40 transition-colors ${i < items.length - 1 ? 'border-b border-gray-50' : ''} ${ann.read ? 'opacity-55' : ''}`}
-              >
-                <div className={`mt-2 w-1.5 h-1.5 rounded-full shrink-0 ${ann.read ? 'bg-gray-200' : 'bg-indigo-500'}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-gray-800">{ann.title}</p>
-                  {ann.content && <p className="text-[12px] text-gray-500 mt-0.5 line-clamp-2">{ann.content}</p>}
-                  <p className="text-[10px] text-gray-300 mt-1">{ann.date}</p>
+          <div className="bg-white/75 backdrop-blur-sm border border-white/90 rounded-2xl overflow-hidden shadow-sm">
+            {items.length === 0 ? (
+              <p className="px-6 py-10 text-center text-[13px] text-gray-400 italic">
+                Sem comunicados de momento na rede.
+              </p>
+            ) : (
+              items.map((ann, i) => (
+                <div key={ann.id}
+                  className={`flex items-start gap-4 px-6 py-4.5 hover:bg-gray-50/40 transition-colors ${i < items.length - 1 ? 'border-b border-gray-50' : ''} ${ann.read ? 'opacity-55' : ''}`}
+                >
+                  <div className={`mt-2 w-1.5 h-1.5 rounded-full shrink-0 ${ann.read ? 'bg-gray-200' : 'bg-indigo-500'}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-gray-800">{ann.title}</p>
+                    {ann.content && (
+                      <p className="text-[12px] text-gray-500 mt-1 leading-relaxed whitespace-pre-wrap">{ann.content}</p>
+                    )}
+                    <p className="text-[10px] text-gray-300 mt-2">{ann.date}</p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => toggle(ann.id)}
+                      className="p-1.5 text-gray-300 hover:text-indigo-500 rounded-lg transition-colors"
+                      title={ann.read ? "Marcar como não lido" : "Marcar como lido"}
+                    >
+                      {ann.read ? <Circle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4 text-indigo-400" />}
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Tem a certeza que deseja eliminar este comunicado?')) {
+                          onDelete(ann.id);
+                        }
+                      }}
+                      className="p-1.5 text-gray-300 hover:text-red-500 rounded-lg transition-colors"
+                      title="Eliminar Comunicado"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <button onClick={() => toggle(ann.id)} className="mt-0.5 text-gray-300 hover:text-indigo-500 transition-colors shrink-0">
-                  {ann.read ? <Circle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4 text-indigo-400" />}
-                </button>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
-        {/* Publicar — sem caixa, editorial */}
+        {/* Publicar */}
         <div>
           <h2 className="text-[14px] font-semibold text-gray-700 mb-5">Novo Comunicado</h2>
           <form onSubmit={publish} className="space-y-4">

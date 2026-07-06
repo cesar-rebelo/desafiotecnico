@@ -3,6 +3,7 @@ import cors from 'cors';
 import organizacoesRouter from './routes/organizacoes.js';
 import comunicacaoRouter from './routes/comunicacao.js';
 import acompanhamentoRouter from './routes/acompanhamento.js';
+import prisma from './lib/prisma.js';
 
 const app = express();
 
@@ -14,24 +15,95 @@ app.use('/api/announcements', comunicacaoRouter);
 app.use('/api/acompanhamento', acompanhamentoRouter);
 
 app.get('/api/dashboard/summary', async (req, res) => {
-  res.json({
-    metrics: {
-      totalOrganizations: 24,
-      pendingAudits: 5,
-      activeCycles: 2,
-      comunicadosNaoLidos: 3
-    },
-    organizationsStatus: [
-      { id: '1', name: 'JE Porto', auditStatus: 'APPROVED', cycleStatus: 'CLOSED', score: 94.5 },
-      { id: '2', name: 'JE Lisboa', auditStatus: 'DOCUMENTS_SUBMITTED', cycleStatus: 'UNDER_REVIEW', score: null },
-      { id: '3', name: 'Júnior Minho', auditStatus: 'SCHEDULED', cycleStatus: 'DRAFT', score: null },
-      { id: '4', name: 'Coimbra Júnior', auditStatus: 'REJECTED', cycleStatus: 'UNDER_REVIEW', score: 45.0 }
-    ],
-    announcements: [
-      { id: '1', title: 'Abertura das candidaturas jeniAL 2026', date: '2026-07-01' },
-      { id: '2', title: 'Submissão de Censos Anuais até 31 de Julho', date: '2026-07-05' }
-    ]
-  });
+  if (!prisma) {
+    return res.json({
+      metrics: { totalOrganizations: 0, pendingAudits: 0, activeCycles: 0, comunicadosNaoLidos: 0 },
+      organizationsStatus: [],
+      announcements: []
+    });
+  }
+  try {
+    const [totalOrgs, pendingAudits, activeCycles, announcements] = await Promise.all([
+      prisma.organization.count(),
+      prisma.audit.count({
+        where: {
+          status: { in: ['SCHEDULED', 'DOCUMENTS_SUBMITTED'] }
+        }
+      }),
+      prisma.indicatorCycle.count({
+        where: {
+          status: { in: ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW'] }
+        }
+      }),
+      prisma.announcement.findMany({
+        orderBy: { createdAt: 'desc' }
+      })
+    ]);
+
+    const indicators = await prisma.indicator.findMany();
+    let totalFaturamento = 0;
+    let totalMembros = 0;
+    let npsSum = 0;
+    let npsCount = 0;
+
+    indicators.forEach(ind => {
+      if (ind.key === 'Faturamento') {
+        totalFaturamento += ind.value;
+      } else if (ind.key === 'NumeroMembros') {
+        totalMembros += ind.value;
+      } else if (ind.key === 'NPS') {
+        npsSum += ind.value;
+        npsCount++;
+      }
+    });
+
+    const averageNps = npsCount > 0 ? Math.round(npsSum / npsCount) : 0;
+
+    const orgs = await prisma.organization.findMany({
+      include: {
+        audits: true,
+        indicatorCycles: true
+      },
+      orderBy: { name: 'asc' }
+    });
+
+    const formattedOrgs = orgs.map(org => {
+      const latestAudit = org.audits[org.audits.length - 1];
+      const latestCycle = org.indicatorCycles[org.indicatorCycles.length - 1];
+      return {
+        id: org.id,
+        name: org.name,
+        status: org.status,
+        auditStatus: latestAudit ? latestAudit.status : 'SCHEDULED',
+        cycleStatus: latestCycle ? latestCycle.status : 'DRAFT',
+        score: latestAudit ? latestAudit.score : null
+      };
+    });
+
+    const formattedAnns = announcements.map(ann => ({
+      id: ann.id,
+      title: ann.title,
+      content: ann.content,
+      date: ann.createdAt.toISOString().split('T')[0]
+    }));
+
+    res.json({
+      metrics: {
+        totalOrganizations: totalOrgs,
+        pendingAudits,
+        activeCycles,
+        comunicadosNaoLidos: formattedAnns.length,
+        totalFaturamento,
+        totalMembros,
+        averageNps
+      },
+      organizationsStatus: formattedOrgs,
+      announcements: formattedAnns
+    });
+  } catch (error) {
+    console.error("Error fetching dashboard summary:", error.message);
+    res.status(500).json({ error: 'Erro ao calcular sumário do dashboard' });
+  }
 });
 
 export default app;
