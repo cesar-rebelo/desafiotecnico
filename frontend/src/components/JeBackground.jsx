@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 
 export default function JeBackground() {
-  const [dimensions, setDimensions] = useState({ cols: 18, rows: 14 });
+  const [dimensions, setDimensions] = useState({ cols: 25, rows: 20 });
 
-  // Valores de espaçamento para repetição seamless perfeita do grid
-  const COL_W = 140; // largura de cada coluna
-  const GAP_Y = 180; // espaço vertical entre logos na mesma coluna
+  // Valores de espaçamento reduzidos para aproximar muito mais os elementos
+  const COL_W = 80;  // largura de cada coluna (anteriormente 140)
+  const GAP_Y = 100; // espaço vertical entre logos (anteriormente 180)
 
   // Ajustar colunas e linhas baseadas no tamanho do ecrã para cobrir totalmente sem quebras
   useEffect(() => {
@@ -13,8 +13,8 @@ export default function JeBackground() {
       const w = window.innerWidth * 1.5;
       const h = window.innerHeight * 1.5;
       setDimensions({
-        cols: Math.max(12, Math.ceil(w / COL_W) + 2),
-        rows: Math.max(10, Math.ceil(h / GAP_Y) + 2)
+        cols: Math.max(20, Math.ceil(w / COL_W) + 2),
+        rows: Math.max(15, Math.ceil(h / GAP_Y) + 2)
       });
     };
 
@@ -59,7 +59,7 @@ export default function JeBackground() {
                 position: 'absolute',
                 left: `${x}px`,
                 top: 0,
-                width: '50px',
+                width: '45px',
                 height: '100%',
               }}
             >
@@ -74,9 +74,9 @@ export default function JeBackground() {
                       position: 'absolute',
                       top: `${y}px`,
                       left: 0,
-                      width: '46px',
+                      width: '40px', // Reduzido ligeiramente de 46px para 40px para harmonizar com a proximidade
                       height: 'auto',
-                      opacity: 0.22, // Opacidade ideal para contornos visíveis mas discretos
+                      opacity: 0.22, // Opacidade equilibrada para contorno
                       filter: 'grayscale(1)',
                     }}
                   />
@@ -87,7 +87,7 @@ export default function JeBackground() {
         })}
       </div>
 
-      {/* Vignette radial ultra suave (apenas esbate ligeiramente nos cantos extremos) */}
+      {/* Vignette radial suave */}
       <div
         style={{
           position: 'absolute',
@@ -98,15 +98,15 @@ export default function JeBackground() {
 
       <style>{`
         .je-grid-scroller {
-          animation: diagonalGridScroll 50s linear infinite;
+          animation: diagonalGridScroll 40s linear infinite;
         }
         @keyframes diagonalGridScroll {
           0% {
             transform: translate(0, 0);
           }
           100% {
-            /* COL_W * 2 = 280px, GAP_Y = 180px para repetição perfeitamente seamless */
-            transform: translate(-280px, 180px);
+            /* COL_W * 2 = 160px, GAP_Y = 100px para repetição perfeitamente seamless */
+            transform: translate(-160px, 100px);
           }
         }
       `}</style>
