@@ -1,92 +1,87 @@
 /**
- * JeBackground — renderiza o logo real da JE Portugal em múltiplas posições,
- * tamanhos e rotações irregulares, com animação de flutuação suave.
+ * JeBackground
  *
- * O logo SVG foi traçado fielmente a partir do branding oficial da JE Portugal:
- *  - J: stem vertical, barra horizontal no topo, curva inferior para a esquerda
- *  - E: dois retângulos horizontais empilhados (a marca gráfica característica)
- * Tudo em stroke (outline) sem preenchimento, igual à imagem de referência.
+ * Recria fielmente o padrão da imagem de referência:
+ *  - Grid densa de logos JE Portugal em outline
+ *  - Logo central maior e mais opaco (como na imagem)
+ *  - Vignette radial que ilumina o centro e escurece as bordas
+ *  - Leve animação de parallax ao mover o rato
  */
 
-// Logo JE Portugal traçado em SVG — fiel ao original
-const JE_LOGO = (
-  <svg
-    viewBox="0 0 100 90"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    style={{ width: '100%', height: '100%' }}
-  >
-    {/* ── J ── */}
-    {/* Barra horizontal superior */}
-    <line x1="8" y1="12" x2="42" y2="12" stroke="currentColor" strokeWidth="5.5" strokeLinecap="square" />
-    {/* Stem vertical */}
-    <line x1="30" y1="12" x2="30" y2="64" stroke="currentColor" strokeWidth="5.5" strokeLinecap="square" />
-    {/* Curva inferior para a esquerda */}
-    <path
-      d="M30 64 Q30 80 18 80 Q8 80 8 70"
-      stroke="currentColor" strokeWidth="5.5" strokeLinecap="square" fill="none"
-    />
+import { useEffect, useRef } from 'react';
 
-    {/* ── E (duas barras horizontais empilhadas) ── */}
-    {/* Barra superior */}
-    <rect x="52" y="10" width="40" height="16" rx="0" stroke="currentColor" strokeWidth="4.5" fill="none" />
-    {/* Barra inferior */}
-    <rect x="52" y="42" width="40" height="16" rx="0" stroke="currentColor" strokeWidth="4.5" fill="none" />
-  </svg>
-);
+/* ─── SVG do logo JE Portugal ─── */
+/* Traçado a partir da imagem de referência:
+   - J: barra horizontal no topo, stem vertical, curva inferior para a esquerda
+   - E: dois retângulos horizontais empilhados (marca gráfica JE Portugal) */
+function JeLogo({ size, stroke = 1.6, color = 'currentColor' }) {
+  const s = size;
+  return (
+    <svg
+      width={s}
+      height={s * 0.78}
+      viewBox="0 0 100 78"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* ── J ── */}
+      {/* Barra horizontal superior */}
+      <line x1="4"  y1="7"  x2="36" y2="7"  stroke={color} strokeWidth={stroke * 3.5} strokeLinecap="square" />
+      {/* Stem vertical */}
+      <line x1="26" y1="7"  x2="26" y2="55" stroke={color} strokeWidth={stroke * 3.5} strokeLinecap="square" />
+      {/* Curva inferior — vai para a esquerda */}
+      <path
+        d="M26 55 Q26 70 14 70 Q5 70 5 62"
+        stroke={color} strokeWidth={stroke * 3.5} strokeLinecap="square" fill="none"
+      />
 
-// Distribuição irregular e orgânica — diferentes posições, escalas e rotações
-// left/top em %, size em px, rot em graus, opacidade, delay de animação
-const LOGOS = [
-  // Muito pequenos — fundo distante
-  { left: 3,   top: 5,   size: 28, rot: -8,  op: 0.12, anim: 0 },
-  { left: 18,  top: 2,   size: 22, rot: 5,   op: 0.10, anim: 2 },
-  { left: 38,  top: 6,   size: 26, rot: -3,  op: 0.11, anim: 1 },
-  { left: 58,  top: 3,   size: 20, rot: 10,  op: 0.09, anim: 3 },
-  { left: 75,  top: 7,   size: 30, rot: -6,  op: 0.12, anim: 0 },
-  { left: 91,  top: 2,   size: 24, rot: 3,   op: 0.10, anim: 2 },
+      {/* ── E: dois retângulos horizontais empilhados ── */}
+      <rect x="44" y="4"  width="52" height="22" stroke={color} strokeWidth={stroke * 3.2} fill="none" />
+      <rect x="44" y="46" width="52" height="22" stroke={color} strokeWidth={stroke * 3.2} fill="none" />
+    </svg>
+  );
+}
 
-  { left: 7,   top: 22,  size: 24, rot: 12,  op: 0.10, anim: 1 },
-  { left: 27,  top: 18,  size: 32, rot: -5,  op: 0.13, anim: 3 },
-  { left: 48,  top: 21,  size: 22, rot: 8,   op: 0.09, anim: 0 },
-  { left: 68,  top: 17,  size: 28, rot: -10, op: 0.11, anim: 2 },
-  { left: 85,  top: 22,  size: 26, rot: 4,   op: 0.10, anim: 1 },
+/* ─── Configuração do grid ─── */
+const COLS         = 14;
+const ROWS         = 10;
+const LOGO_W       = 64;   // largura de cada logo em px
+const LOGO_H       = 50;   // altura de cada logo em px
+const GAP_X        = 14;   // espaço horizontal entre logos
+const GAP_Y        = 18;   // espaço vertical entre logos
 
-  { left: 1,   top: 42,  size: 20, rot: -7,  op: 0.09, anim: 2 },
-  { left: 15,  top: 38,  size: 30, rot: 6,   op: 0.12, anim: 0 },
-  { left: 33,  top: 44,  size: 24, rot: -12, op: 0.10, anim: 3 },
-  { left: 52,  top: 39,  size: 28, rot: 2,   op: 0.11, anim: 1 },
-  { left: 72,  top: 43,  size: 22, rot: -4,  op: 0.09, anim: 0 },
-  { left: 89,  top: 40,  size: 32, rot: 9,   op: 0.13, anim: 2 },
-
-  { left: 5,   top: 62,  size: 26, rot: 5,   op: 0.11, anim: 1 },
-  { left: 22,  top: 58,  size: 22, rot: -9,  op: 0.09, anim: 3 },
-  { left: 43,  top: 63,  size: 30, rot: 7,   op: 0.12, anim: 0 },
-  { left: 62,  top: 59,  size: 24, rot: -3,  op: 0.10, anim: 2 },
-  { left: 80,  top: 62,  size: 28, rot: 11,  op: 0.11, anim: 1 },
-  { left: 95,  top: 58,  size: 20, rot: -6,  op: 0.09, anim: 3 },
-
-  { left: 10,  top: 80,  size: 24, rot: -4,  op: 0.10, anim: 2 },
-  { left: 30,  top: 78,  size: 28, rot: 8,   op: 0.12, anim: 0 },
-  { left: 55,  top: 82,  size: 22, rot: -11, op: 0.09, anim: 1 },
-  { left: 74,  top: 79,  size: 32, rot: 3,   op: 0.13, anim: 3 },
-  { left: 93,  top: 83,  size: 26, rot: -7,  op: 0.10, anim: 2 },
-
-  // Médios — camada intermédia
-  { left: 12,  top: 12,  size: 50, rot: -6,  op: 0.07, anim: 1 },
-  { left: 62,  top: 55,  size: 46, rot: 8,   op: 0.06, anim: 3 },
-  { left: 82,  top: 30,  size: 52, rot: -3,  op: 0.07, anim: 0 },
-  { left: 35,  top: 68,  size: 48, rot: 12,  op: 0.06, anim: 2 },
-  { left: 5,   top: 50,  size: 44, rot: -10, op: 0.06, anim: 1 },
-  { left: 48,  top: 8,   size: 54, rot: 5,   op: 0.07, anim: 3 },
-
-  // Grandes — destaque difuso
-  { left: 20,  top: 32,  size: 88, rot: -4,  op: 0.045, anim: 2 },
-  { left: 60,  top: 15,  size: 76, rot: 7,   op: 0.04,  anim: 0 },
-  { left: 70,  top: 65,  size: 82, rot: -8,  op: 0.045, anim: 1 },
-];
+/* Calcula opacidade com base na distância ao centro do grid */
+function opacityForCell(col, row) {
+  const cx   = (COLS - 1) / 2;
+  const cy   = (ROWS - 1) / 2;
+  const dx   = (col - cx) / cx;
+  const dy   = (row - cy) / cy;
+  const dist = Math.sqrt(dx * dx + dy * dy);          // 0 = centro, ~1.4 = canto
+  // Centro: 0.35, bordas: 0.08
+  return Math.max(0.07, 0.35 - dist * 0.22);
+}
 
 export default function JeBackground() {
+  const wrapRef = useRef(null);
+
+  /* Parallax suave ao mover o rato */
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+
+    const onMove = (e) => {
+      const px = (e.clientX / window.innerWidth  - 0.5) * 12;
+      const py = (e.clientY / window.innerHeight - 0.5) * 8;
+      el.style.transform = `translate(${px}px, ${py}px)`;
+    };
+
+    window.addEventListener('mousemove', onMove, { passive: true });
+    return () => window.removeEventListener('mousemove', onMove);
+  }, []);
+
+  const totalW = COLS * (LOGO_W + GAP_X) - GAP_X;
+  const totalH = ROWS * (LOGO_H + GAP_Y) - GAP_Y;
+
   return (
     <div
       aria-hidden="true"
@@ -96,33 +91,71 @@ export default function JeBackground() {
         background: '#f4f5f7',
       }}
     >
-      {/* Logos dispersos irregularmente */}
-      {LOGOS.map((l, i) => (
-        <div
-          key={i}
-          className={`je-logo-float-${l.anim}`}
-          style={{
-            position: 'absolute',
-            left: `${l.left}%`,
-            top: `${l.top}%`,
-            width: l.size,
-            height: l.size * 0.9,
-            color: '#6b7280',
-            opacity: l.op,
-            '--r': `${l.rot}deg`,
-            transform: `rotate(${l.rot}deg)`,
-            animationDelay: `${(i * 0.37) % 4}s`,
-          }}
-        >
-          {JE_LOGO}
-        </div>
-      ))}
+      {/* Grid de logos */}
+      <div
+        ref={wrapRef}
+        style={{
+          position: 'absolute',
+          /* Centrar o grid no ecrã e deixar margem extra para o parallax */
+          top:  '50%', left: '50%',
+          width:  totalW,
+          height: totalH,
+          transform: 'translate(-50%, -50%)',
+          transition: 'transform 0.6s cubic-bezier(.22,1,.36,1)',
+          willChange: 'transform',
+        }}
+      >
+        {Array.from({ length: ROWS }).map((_, row) =>
+          Array.from({ length: COLS }).map((_, col) => {
+            const isCenterCol = col === Math.floor(COLS / 2);
+            const isCenterRow = row === Math.floor(ROWS / 2);
+            const isCenter    = isCenterCol && isCenterRow;
+            const size        = isCenter ? LOGO_W * 1.85 : LOGO_W;
+            const op          = isCenter ? 0.42 : opacityForCell(col, row);
 
-      {/* Vignette radial suave — o centro fica mais limpo */}
+            return (
+              <div
+                key={`${col}-${row}`}
+                style={{
+                  position: 'absolute',
+                  left: col * (LOGO_W + GAP_X) + (isCenter ? -(size - LOGO_W) / 2 : 0),
+                  top:  row * (LOGO_H + GAP_Y) + (isCenter ? -(size * 0.78 - LOGO_H) / 2 : 0),
+                  color: '#374151',
+                  opacity: op,
+                  /* Animação de flutuação apenas no logo central */
+                  ...(isCenter ? { animation: 'jeFloat 5s ease-in-out infinite' } : {}),
+                }}
+              >
+                <JeLogo
+                  size={size}
+                  stroke={isCenter ? 1.2 : 1.6}
+                  color={isCenter ? '#1e293b' : '#6b7280'}
+                />
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Vignette radial — centro aberto, bordas fechadas */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'radial-gradient(ellipse 70% 65% at 52% 46%, rgba(244,245,247,0.05) 0%, rgba(244,245,247,0.5) 50%, rgba(244,245,247,0.93) 100%)',
+        background: `radial-gradient(
+          ellipse 60% 55% at 50% 50%,
+          rgba(244,245,247,0.0)  0%,
+          rgba(244,245,247,0.45) 45%,
+          rgba(244,245,247,0.88) 80%,
+          rgba(244,245,247,0.97) 100%
+        )`,
       }} />
+
+      {/* Keyframe inline para o logo central */}
+      <style>{`
+        @keyframes jeFloat {
+          0%, 100% { transform: translateY(0);   }
+          50%       { transform: translateY(-6px); }
+        }
+      `}</style>
     </div>
   );
 }
