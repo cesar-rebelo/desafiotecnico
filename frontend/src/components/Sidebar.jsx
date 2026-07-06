@@ -1,4 +1,4 @@
-import { LayoutDashboard, TrendingUp, ClipboardCheck, FileText, Mail, ShieldCheck, LogOut } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, ClipboardCheck, FileText, Mail, LogOut } from 'lucide-react';
 
 const items = [
   { id: 'dashboard',      label: 'Visão Geral',   icon: LayoutDashboard },
@@ -14,12 +14,10 @@ export default function Sidebar({ activeTab, setActiveTab }) {
       {/* Logo */}
       <div className="px-7 pt-7 pb-5">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center shadow-sm">
-            <ShieldCheck className="w-4.5 h-4.5 text-white" />
-          </div>
+          <img src="/je-logo.png" className="w-8 h-8 object-contain shrink-0" alt="JE Portugal" />
           <div>
-            <p className="text-[13px] font-bold text-gray-900">JE Portugal</p>
-            <p className="text-[10px] text-gray-400 font-medium mt-px">Plataforma Unificada</p>
+            <p className="text-[13px] font-bold text-gray-900 leading-none">JE Portugal</p>
+            <p className="text-[10px] text-gray-400 font-medium mt-1">Plataforma Unificada</p>
           </div>
         </div>
       </div>
