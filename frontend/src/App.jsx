@@ -16,35 +16,34 @@ const MOCK_DATA = {
     { id: '4', name: 'Coimbra Júnior', status: 'JUNIOR_ENTERPRISE', auditStatus: 'REJECTED',            cycleStatus: 'UNDER_REVIEW', score: 45.0 },
   ],
   announcements: [
-    { id: '1', title: 'Abertura das candidaturas jeniAL 2026',       date: '2026-07-01' },
-    { id: '2', title: 'Submissão de Censos Anuais até 31 de Julho',   date: '2026-07-05' },
+    { id: '1', title: 'Abertura das candidaturas jeniAL 2026',     date: '2026-07-01' },
+    { id: '2', title: 'Submissão de Censos Anuais até 31 de Julho', date: '2026-07-05' },
   ],
 };
 
-const BADGE = {
+const BADGE_CLASS = {
   audit: {
     APPROVED:            'bg-emerald-50 text-emerald-700',
-    DOCUMENTS_SUBMITTED: 'bg-amber-50 text-amber-700',
-    SCHEDULED:           'bg-gray-100 text-gray-500',
-    REJECTED:            'bg-red-50 text-red-600',
+    DOCUMENTS_SUBMITTED: 'bg-amber-50   text-amber-700',
+    SCHEDULED:           'bg-gray-100   text-gray-500',
+    REJECTED:            'bg-red-50     text-red-600',
   },
   cycle: {
-    CLOSED:      'bg-emerald-50 text-emerald-700',
-    UNDER_REVIEW:'bg-amber-50 text-amber-700',
-    SUBMITTED:   'bg-blue-50 text-blue-700',
-    DRAFT:       'bg-gray-100 text-gray-500',
+    CLOSED:       'bg-emerald-50 text-emerald-700',
+    UNDER_REVIEW: 'bg-amber-50   text-amber-700',
+    SUBMITTED:    'bg-blue-50    text-blue-700',
+    DRAFT:        'bg-gray-100   text-gray-500',
   },
 };
-
 const LABEL = {
   APPROVED:'Aprovada', DOCUMENTS_SUBMITTED:'Docs Enviados', SCHEDULED:'Agendada', REJECTED:'Rejeitada',
   CLOSED:'Concluído', UNDER_REVIEW:'Em Revisão', SUBMITTED:'Submetido', DRAFT:'Rascunho',
 };
 
 function getStatusBadge(status, type) {
-  const cls = BADGE[type]?.[status] ?? 'bg-gray-100 text-gray-500';
+  const cls = BADGE_CLASS[type]?.[status] ?? 'bg-gray-100 text-gray-500';
   return (
-    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${cls}`}>
+    <span className={`inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full ${cls}`}>
       {LABEL[status] ?? status}
     </span>
   );
@@ -61,11 +60,8 @@ export default function App() {
       try {
         const [summary, orgs] = await Promise.all([api.getDashboardSummary(), api.getOrganizations()]);
         setData({ ...summary, organizationsStatus: orgs });
-      } catch {
-        setData(MOCK_DATA);
-      } finally {
-        setLoading(false);
-      }
+      } catch { setData(MOCK_DATA); }
+      finally  { setLoading(false); }
     })();
   }, []);
 
@@ -73,25 +69,17 @@ export default function App() {
     e.preventDefault();
     const name = newJE.name.trim();
     if (!name) return;
-    try {
-      const created = await api.createOrganization(newJE);
-      setData(p => ({
-        ...p,
-        metrics: { ...p.metrics, totalOrganizations: p.metrics.totalOrganizations + 1 },
-        organizationsStatus: [...p.organizationsStatus, created],
-      }));
-    } catch {
-      setData(p => ({
-        ...p,
-        metrics: { ...p.metrics, totalOrganizations: p.metrics.totalOrganizations + 1 },
-        organizationsStatus: [...p.organizationsStatus, {
-          id: Date.now().toString(), name, status: newJE.status,
-          auditStatus: 'SCHEDULED', cycleStatus: 'DRAFT', score: null,
-        }],
-      }));
-    }
+    const fallback = { id: Date.now().toString(), name, status: newJE.status, auditStatus: 'SCHEDULED', cycleStatus: 'DRAFT', score: null };
+    try { const created = await api.createOrganization(newJE); pushOrg(created); }
+    catch { pushOrg(fallback); }
     setNewJE({ name: '', status: 'JUNIOR_INITIATIVE' });
   };
+
+  const pushOrg = (org) => setData(p => ({
+    ...p,
+    metrics: { ...p.metrics, totalOrganizations: p.metrics.totalOrganizations + 1 },
+    organizationsStatus: [...p.organizationsStatus, org],
+  }));
 
   const handleIndicators = async (formData) => {
     try { await api.submitIndicators(formData); } catch {}
@@ -103,6 +91,11 @@ export default function App() {
     }));
   };
 
+  const PAGE_TITLES = {
+    dashboard: 'Visão Geral', acompanhamento: 'Acompanhamento',
+    auditoria: 'Auditoria', censos: 'Censos Anuais', comunicacao: 'Comunicação',
+  };
+
   const views = {
     dashboard:      <DashboardGeral data={data} getStatusBadge={getStatusBadge} onCreateJE={handleCreateJE} newJE={newJE} setNewJE={setNewJE} />,
     acompanhamento: <AcompanhamentoView data={data} onIndicatorSubmit={handleIndicators} />,
@@ -112,26 +105,32 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen bg-[#f8f9fb] overflow-hidden font-[Inter,system-ui,sans-serif]">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+    <>
+      {/* Camada de textura JE animada */}
+      <div className="je-bg" aria-hidden="true" />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Topbar */}
-        <header className="h-14 bg-white border-b border-gray-100 flex items-center px-8 shrink-0">
-          <p className="text-[13px] text-gray-400 font-medium">
-            JE Portugal &nbsp;/&nbsp;
-            <span className="text-gray-700 font-semibold capitalize">{activeTab === 'dashboard' ? 'Visão Geral' : activeTab}</span>
-          </p>
-        </header>
+      <div className="relative z-10 flex h-screen overflow-hidden">
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        {/* Conteúdo */}
-        <main className="flex-1 overflow-y-auto px-8 py-8">
-          {loading
-            ? <div className="flex items-center justify-center h-60"><div className="w-8 h-8 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" /></div>
-            : views[activeTab] ?? null
-          }
-        </main>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Top bar muito fina */}
+          <header className="h-12 bg-white/70 backdrop-blur-md border-b border-gray-200/60 flex items-center px-10 shrink-0">
+            <p className="text-[12px] text-gray-400 font-medium tracking-wide">
+              JE Portugal &nbsp;/&nbsp;
+              <span className="text-gray-700 font-semibold">{PAGE_TITLES[activeTab]}</span>
+            </p>
+          </header>
+
+          <main className="flex-1 overflow-y-auto px-10 py-10">
+            {loading
+              ? <div className="flex items-center justify-center h-64">
+                  <div className="w-7 h-7 border-2 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
+                </div>
+              : views[activeTab]
+            }
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
