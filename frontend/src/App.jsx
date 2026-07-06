@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Menu } from 'lucide-react';
 import { api } from './services/api';
 import Sidebar from './components/Sidebar';
 import DashboardGeral from './components/DashboardGeral';
@@ -48,6 +49,7 @@ export default function App() {
   const [data, setData]           = useState(MOCK_DATA);
   const [loading, setLoading]     = useState(true);
   const [newJE, setNewJE]         = useState({ name: '', status: 'JUNIOR_INITIATIVE' });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Estado para o Pop-up customizado de confirmação
   const [confirmData, setConfirmData] = useState({
@@ -164,7 +166,7 @@ export default function App() {
       />
     ),
     acompanhamento: <AcompanhamentoView data={data} onIndicatorSubmit={handleIndicators} />,
-    auditoria:      <AuditoriaView data={data} />,
+    auditoria:      <AuditoriaView data={data} onAuditChange={refreshData} />,
     censos:         <CensosView />,
     comunicacao: (
       <ComunicacaoView
@@ -181,18 +183,25 @@ export default function App() {
       <JeBackground />
 
       <div className="relative z-10 flex h-screen overflow-hidden bg-transparent">
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Top bar muito fina */}
-          <header className="h-12 bg-white/70 backdrop-blur-md border-b border-gray-200/60 flex items-center px-10 shrink-0">
+          {/* Top bar muito fina e responsiva */}
+          <header className="h-12 bg-white/70 backdrop-blur-md border-b border-gray-200/60 flex items-center px-6 lg:px-10 shrink-0 gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-1.5 -ml-1 text-gray-400 hover:text-gray-600 lg:hidden focus:outline-none rounded-lg hover:bg-gray-100"
+              title="Abrir Menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
             <p className="text-[12px] text-gray-400 font-medium tracking-wide">
               JE Portugal &nbsp;/&nbsp;
               <span className="text-gray-700 font-semibold">{PAGE_TITLES[activeTab]}</span>
             </p>
           </header>
 
-          <main className="flex-1 overflow-y-auto px-10 py-10">
+          <main className="flex-1 overflow-y-auto px-6 py-6 lg:px-10 lg:py-10">
             {loading
               ? <div className="flex items-center justify-center h-64">
                   <div className="w-7 h-7 border-2 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />

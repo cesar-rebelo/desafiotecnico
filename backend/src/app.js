@@ -3,6 +3,7 @@ import cors from 'cors';
 import organizacoesRouter from './routes/organizacoes.js';
 import comunicacaoRouter from './routes/comunicacao.js';
 import acompanhamentoRouter from './routes/acompanhamento.js';
+import auditsRouter from './routes/audits.js';
 import prisma from './lib/prisma.js';
 
 const app = express();
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use('/api/organizations', organizacoesRouter);
 app.use('/api/announcements', comunicacaoRouter);
 app.use('/api/acompanhamento', acompanhamentoRouter);
+app.use('/api/audits', auditsRouter);
 
 app.get('/api/dashboard/summary', async (req, res) => {
   if (!prisma) {

@@ -60,5 +60,24 @@ export const api = {
     });
     if (!res.ok) throw new Error('Erro ao submeter indicadores');
     return res.json();
+  },
+  getAudit: async (orgId) => {
+    const res = await fetch(`${API_URL}/audits/${orgId}`);
+    if (!res.ok) throw new Error('Erro ao obter auditoria');
+    return res.json();
+  },
+  updateAuditDocument: async (docId, isApproved, feedback) => {
+    const res = await fetch(`${API_URL}/audits/documents/${docId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isApproved, feedback })
+    });
+    if (!res.ok) throw new Error('Erro ao atualizar documento de auditoria');
+    return res.json();
+  },
+  getIndicatorCycles: async (orgId) => {
+    const res = await fetch(`${API_URL}/acompanhamento/${orgId}`);
+    if (!res.ok) throw new Error('Erro ao obter ciclos de indicadores');
+    return res.json();
   }
 };

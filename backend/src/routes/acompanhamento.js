@@ -33,4 +33,23 @@ router.post('/indicadores', async (req, res) => {
   }
 });
 
+router.get('/:orgId', async (req, res) => {
+  const { orgId } = req.params;
+  if (!prisma) {
+    return res.json(null);
+  }
+
+  try {
+    const cycle = await prisma.indicatorCycle.findFirst({
+      where: { organizationId: orgId },
+      orderBy: { updatedAt: 'desc' },
+      include: { indicators: true }
+    });
+    res.json(cycle);
+  } catch (error) {
+    console.error("Database error fetching cycle:", error.message);
+    res.status(500).json({ error: 'Erro ao buscar ciclo de acompanhamento' });
+  }
+});
+
 export default router;
