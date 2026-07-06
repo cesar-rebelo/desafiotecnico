@@ -69,9 +69,8 @@ export default function AcompanhamentoView({ data, onIndicatorSubmit }) {
                   const isSelected = selectedJE?.id === org.id;
                   return (
                     <div key={org.id}
-                      className={`flex items-center justify-between px-6 py-4 hover:bg-gray-50/50 transition-colors ${
-                        i < data.organizationsStatus.length - 1 ? 'border-b border-gray-50' : ''
-                      } ${isSelected ? 'bg-indigo-50/20' : ''}`}
+                      className={`flex items-center justify-between px-6 py-4 hover:bg-gray-50/50 transition-colors ${i < data.organizationsStatus.length - 1 ? 'border-b border-gray-50' : ''
+                        } ${isSelected ? 'bg-indigo-50/20' : ''}`}
                     >
                       <div>
                         <p className="text-[13px] font-semibold text-gray-800">{org.name}</p>
@@ -121,7 +120,7 @@ export default function AcompanhamentoView({ data, onIndicatorSubmit }) {
                         onClick={() => setIsEditing(true)}
                         className="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-[11px] font-semibold rounded-lg hover:bg-indigo-100 transition-colors"
                       >
-                        Submeter Novamente
+                        Editar Indicadores
                       </button>
                       <button onClick={() => setSelectedJE(null)} className="text-gray-300 hover:text-gray-500 text-lg leading-none transition-colors px-1">×</button>
                     </div>
@@ -158,9 +157,9 @@ export default function AcompanhamentoView({ data, onIndicatorSubmit }) {
           <h2 className="text-[14px] font-semibold text-gray-700 mb-4">Metas Semestrais</h2>
           <div className="space-y-6">
             {[
-              { label: 'Faturamento (€)',     current: data.metrics.totalFaturamento || 0,  target: 15000, icon: <DollarSign className="w-3.5 h-3.5 text-indigo-400" /> },
-              { label: 'Membros Capacitados', current: data.metrics.totalMembros || 0,   target: 500,   icon: <Users      className="w-3.5 h-3.5 text-indigo-400" /> },
-              { label: 'NPS Médio (%)',        current: data.metrics.averageNps || 0,    target: 90,    icon: <Target     className="w-3.5 h-3.5 text-indigo-400" /> },
+              { label: 'Faturamento (€)', current: data.metrics.totalFaturamento || 0, target: 15000, icon: <DollarSign className="w-3.5 h-3.5 text-indigo-400" /> },
+              { label: 'Membros Capacitados', current: data.metrics.totalMembros || 0, target: 500, icon: <Users className="w-3.5 h-3.5 text-indigo-400" /> },
+              { label: 'NPS Médio (%)', current: data.metrics.averageNps || 0, target: 90, icon: <Target className="w-3.5 h-3.5 text-indigo-400" /> },
             ].map((m) => {
               const pct = Math.min(100, Math.round((m.current / m.target) * 100));
               return (

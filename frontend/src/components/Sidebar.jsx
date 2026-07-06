@@ -1,14 +1,15 @@
+import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, TrendingUp, ClipboardCheck, FileText, Mail, LogOut, X } from 'lucide-react';
 
 const items = [
-  { id: 'dashboard',      label: 'Visão Geral',   icon: LayoutDashboard },
-  { id: 'acompanhamento', label: 'Acompanhamento', icon: TrendingUp },
-  { id: 'auditoria',      label: 'Auditoria',      icon: ClipboardCheck },
-  { id: 'censos',         label: 'Censos Anuais',  icon: FileText },
-  { id: 'comunicacao',    label: 'Comunicação',    icon: Mail },
+  { to: '/dashboard',      label: 'Visão Geral',   icon: LayoutDashboard },
+  { to: '/acompanhamento', label: 'Acompanhamento', icon: TrendingUp },
+  { to: '/auditoria',      label: 'Auditoria',      icon: ClipboardCheck },
+  { to: '/censos',         label: 'Censos Anuais',  icon: FileText },
+  { to: '/comunicacao',    label: 'Comunicação',    icon: Mail },
 ];
 
-export default function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen }) {
+export default function Sidebar({ isOpen, setIsOpen }) {
   return (
     <>
       {/* Backdrop overlay para telemóveis */}
@@ -46,26 +47,29 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen }) 
 
         <div className="mx-5 border-t border-gray-100 mb-3" />
 
-        {/* Nav */}
+        {/* Nav com NavLinks da react-router-dom */}
         <nav className="flex-1 px-4 space-y-px overflow-y-auto">
-          {items.map(({ id, label, icon: Icon }) => {
-            const active = activeTab === id;
+          {items.map(({ to, label, icon: Icon }) => {
             return (
-              <button
-                key={id}
-                onClick={() => {
-                  setActiveTab(id);
-                  setIsOpen(false); // Fecha o menu móvel após clique
-                }}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 text-left ${
-                  active
-                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                    : 'text-gray-500 hover:bg-gray-100/70 hover:text-gray-800'
-                }`}
+              <NavLink
+                key={to}
+                to={to}
+                onClick={() => setIsOpen(false)}
+                className={({ isActive }) =>
+                  `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 text-left ${
+                    isActive
+                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
+                      : 'text-gray-500 hover:bg-gray-100/70 hover:text-gray-800'
+                  }`
+                }
               >
-                <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-white' : 'text-gray-400'}`} />
-                {label}
-              </button>
+                {({ isActive }) => (
+                  <>
+                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                    {label}
+                  </>
+                )}
+              </NavLink>
             );
           })}
         </nav>

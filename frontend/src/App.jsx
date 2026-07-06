@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { api } from './services/api';
 import Sidebar from './components/Sidebar';
@@ -45,7 +46,7 @@ function getStatusBadge(status, type) {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const location = useLocation();
   const [data, setData]           = useState(MOCK_DATA);
   const [loading, setLoading]     = useState(true);
   const [newJE, setNewJE]         = useState({ name: '', status: 'JUNIOR_INITIATIVE' });
@@ -149,33 +150,15 @@ export default function App() {
   };
 
   const PAGE_TITLES = {
-    dashboard: 'Visão Geral', acompanhamento: 'Acompanhamento',
-    auditoria: 'Auditoria', censos: 'Censos Anuais', comunicacao: 'Comunicação',
+    dashboard: 'Visão Geral',
+    acompanhamento: 'Acompanhamento',
+    auditoria: 'Auditoria',
+    censos: 'Censos Anuais',
+    comunicacao: 'Comunicação',
   };
 
-  const views = {
-    dashboard: (
-      <DashboardGeral
-        data={data}
-        getStatusBadge={getStatusBadge}
-        onCreateJE={handleCreateJE}
-        newJE={newJE}
-        setNewJE={setNewJE}
-        onUpdateJE={handleUpdateJE}
-        onDeleteJE={handleDeleteJE}
-      />
-    ),
-    acompanhamento: <AcompanhamentoView data={data} onIndicatorSubmit={handleIndicators} />,
-    auditoria:      <AuditoriaView data={data} onAuditChange={refreshData} />,
-    censos:         <CensosView />,
-    comunicacao: (
-      <ComunicacaoView
-        announcements={data.announcements}
-        onPublish={handlePublishAnnouncement}
-        onDelete={handleDeleteAnnouncement}
-      />
-    ),
-  };
+  const activePath = location.pathname.substring(1) || 'dashboard';
+  const pageTitle  = PAGE_TITLES[activePath] || 'Visão Geral';
 
   return (
     <>
@@ -183,7 +166,7 @@ export default function App() {
       <JeBackground />
 
       <div className="relative z-10 flex h-screen overflow-hidden bg-transparent">
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+        <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Top bar muito fina e responsiva */}
@@ -197,17 +180,54 @@ export default function App() {
             </button>
             <p className="text-[12px] text-gray-400 font-medium tracking-wide">
               JE Portugal &nbsp;/&nbsp;
-              <span className="text-gray-700 font-semibold">{PAGE_TITLES[activeTab]}</span>
+              <span className="text-gray-700 font-semibold">{pageTitle}</span>
             </p>
           </header>
 
           <main className="flex-1 overflow-y-auto px-6 py-6 lg:px-10 lg:py-10">
-            {loading
-              ? <div className="flex items-center justify-center h-64">
-                  <div className="w-7 h-7 border-2 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
-                </div>
-              : views[activeTab]
-            }
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="w-7 h-7 border-2 border-gray-200 border-t-indigo-500 rounded-full animate-spin" />
+              </div>
+            ) : (
+              <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <DashboardGeral
+                      data={data}
+                      getStatusBadge={getStatusBadge}
+                      onCreateJE={handleCreateJE}
+                      newJE={newJE}
+                      setNewJE={setNewJE}
+                      onUpdateJE={handleUpdateJE}
+                      onDeleteJE={handleDeleteJE}
+                    />
+                  }
+                />
+                <Route
+                  path="/acompanhamento"
+                  element={<AcompanhamentoView data={data} onIndicatorSubmit={handleIndicators} />}
+                />
+                <Route
+                  path="/auditoria"
+                  element={<AuditoriaView data={data} onAuditChange={refreshData} />}
+                />
+                <Route path="/censos" element={<CensosView />} />
+                <Route
+                  path="/comunicacao"
+                  element={
+                    <ComunicacaoView
+                      announcements={data.announcements}
+                      onPublish={handlePublishAnnouncement}
+                      onDelete={handleDeleteAnnouncement}
+                    />
+                  }
+                />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            )}
           </main>
         </div>
       </div>
