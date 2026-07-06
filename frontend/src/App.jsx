@@ -110,7 +110,7 @@ export default function App() {
       {/* Camada de textura JE animada */}
       <JeBackground />
 
-      <div className="relative z-10 flex h-screen overflow-hidden">
+      <div className="relative z-10 flex h-screen overflow-hidden bg-transparent">
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
         <div className="flex-1 flex flex-col overflow-hidden">

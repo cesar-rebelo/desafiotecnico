@@ -76,7 +76,7 @@ export default function JeBackground() {
                       left: 0,
                       width: '46px',
                       height: 'auto',
-                      opacity: 0.12, // Opacidade suave do contorno cinzento
+                      opacity: 0.28, // Opacidade aumentada para garantir visibilidade excelente
                       filter: 'grayscale(1)',
                     }}
                   />
