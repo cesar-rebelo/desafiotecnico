@@ -51,8 +51,9 @@ export default function App() {
   const location = useLocation();
   const [data, setData]           = useState(MOCK_DATA);
   const [loading, setLoading]     = useState(true);
-  const [newJE, setNewJE]         = useState({ name: '', status: 'JUNIOR_INITIATIVE' });
+  const [newJE, setNewJE]         = useState({ name: '', status: 'JUNIOR_INITIATIVE', members: '' });
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [readIds, setReadIds]     = useState([]);
 
   // Estado para o Pop-up customizado de confirmação
   const [confirmData, setConfirmData] = useState({
@@ -75,6 +76,9 @@ export default function App() {
   const refreshData = async () => {
     try {
       const summary = await api.getDashboardSummary();
+      const ids = JSON.parse(localStorage.getItem('read_announcements') || '[]');
+      const unreadCount = summary.announcements.filter(ann => !ids.includes(ann.id)).length;
+      summary.metrics.comunicadosNaoLidos = unreadCount;
       setData(summary);
     } catch (err) {
       console.error('Error fetching data from API:', err);
@@ -84,27 +88,49 @@ export default function App() {
   useEffect(() => {
     (async () => {
       setLoading(true);
+      const ids = JSON.parse(localStorage.getItem('read_announcements') || '[]');
+      setReadIds(ids);
       await refreshData();
       setLoading(false);
     })();
   }, []);
+
+  const handleToggleRead = (id) => {
+    setReadIds(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      localStorage.setItem('read_announcements', JSON.stringify(next));
+
+      setData(current => {
+        const unreadCount = current.announcements.filter(ann => !next.includes(ann.id)).length;
+        return {
+          ...current,
+          metrics: {
+            ...current.metrics,
+            comunicadosNaoLidos: unreadCount
+          }
+        };
+      });
+
+      return next;
+    });
+  };
 
   const handleCreateJE = async (e) => {
     e.preventDefault();
     const name = newJE.name.trim();
     if (!name) return;
     try {
-      await api.createOrganization({ name, status: newJE.status });
+      await api.createOrganization({ name, status: newJE.status, members: parseInt(newJE.members) || 0 });
       await refreshData();
-      setNewJE({ name: '', status: 'JUNIOR_INITIATIVE' });
+      setNewJE({ name: '', status: 'JUNIOR_INITIATIVE', members: '' });
     } catch (err) {
       console.error('Error creating organization:', err);
     }
   };
 
-  const handleUpdateJE = async (id, name, status) => {
+  const handleUpdateJE = async (id, name, status, members) => {
     try {
-      await api.updateOrganization(id, { name, status });
+      await api.updateOrganization(id, { name, status, members });
       await refreshData();
     } catch (err) {
       console.error('Error updating organization:', err);
@@ -230,6 +256,7 @@ export default function App() {
                   element={
                     <DashboardGeral
                       data={data}
+                      readIds={readIds}
                       getStatusBadge={getStatusBadge}
                     />
                   }
@@ -242,12 +269,14 @@ export default function App() {
                   path="/auditoria"
                   element={<AuditoriaView data={data} onAuditChange={refreshData} onRejectDoc={handleRejectDoc} />}
                 />
-                <Route path="/censos" element={<CensosView />} />
+                <Route path="/censos" element={<CensosView data={data} />} />
                 <Route
                   path="/comunicacao"
                   element={
                     <ComunicacaoView
                       announcements={data.announcements}
+                      readIds={readIds}
+                      onToggleRead={handleToggleRead}
                       onPublish={handlePublishAnnouncement}
                       onDelete={handleDeleteAnnouncement}
                     />

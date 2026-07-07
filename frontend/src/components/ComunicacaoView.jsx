@@ -1,27 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Send, CheckCircle2, Circle, Trash2 } from 'lucide-react';
 
-export default function ComunicacaoView({ announcements: initial, onPublish, onDelete }) {
-  const [items, setItems] = useState([]);
+export default function ComunicacaoView({ announcements, readIds, onToggleRead, onPublish, onDelete }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
 
-  // Sincronizar o estado local sempre que a lista de comunicados no pai (banco de dados) for alterada
-  useEffect(() => {
-    setItems(prev => {
-      return initial.map(newAnn => {
-        const existing = prev.find(p => p.id === newAnn.id);
-        return {
-          ...newAnn,
-          read: existing ? existing.read : false
-        };
-      });
-    });
-  }, [initial]);
-
-  const toggle = (id) => {
-    setItems(p => p.map(a => a.id === id ? { ...a, read: !a.read } : a));
-  };
+  const items = announcements.map(ann => ({
+    ...ann,
+    read: readIds.includes(ann.id)
+  }));
 
   const publish = (e) => {
     e.preventDefault();
@@ -71,7 +58,7 @@ export default function ComunicacaoView({ announcements: initial, onPublish, onD
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <button
-                      onClick={() => toggle(ann.id)}
+                      onClick={() => onToggleRead(ann.id)}
                       className="p-1.5 text-gray-300 hover:text-indigo-500 rounded-lg transition-colors"
                       title={ann.read ? "Marcar como não lido" : "Marcar como lido"}
                     >

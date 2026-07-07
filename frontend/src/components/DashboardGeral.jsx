@@ -1,7 +1,8 @@
 import { Building2, Scale, RefreshCw, MessageSquare } from 'lucide-react';
 import CardMetrica from './CardMetrica';
+import PainelComunicados from './PainelComunicados';
 
-export default function DashboardGeral({ data, getStatusBadge }) {
+export default function DashboardGeral({ data, readIds, getStatusBadge }) {
 
   // Obter itens de desempenho dinamicamente a partir dos dados do backend
   const scoreItems = data.organizationsStatus
@@ -81,7 +82,7 @@ export default function DashboardGeral({ data, getStatusBadge }) {
           </div>
         </div>
 
-        {/* Coluna direita — apenas desempenho */}
+        {/* Coluna direita — desempenho e comunicados */}
         <div className="space-y-8">
           <div>
             <h2 className="text-[15px] font-semibold text-gray-800 mb-1">Desempenho</h2>
@@ -107,6 +108,8 @@ export default function DashboardGeral({ data, getStatusBadge }) {
               )}
             </div>
           </div>
+
+          <PainelComunicados announcements={data.announcements} readIds={readIds} />
         </div>
       </div>
     </div>

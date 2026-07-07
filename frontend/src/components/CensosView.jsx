@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { api } from '../services/api';
 
 const STEPS = ['Organização', 'Membros', 'Financeiro'];
 
-export default function CensosView() {
+export default function CensosView({ data }) {
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
   const [form, setForm] = useState({ jeName:'', foundationYear:'', headquarters:'', membersCount:'', projectsCount:'', faturamentoAnual:'' });
@@ -27,7 +28,21 @@ export default function CensosView() {
             <button onClick={() => { setDone(false); setStep(0); }} className="text-[12px] text-indigo-600 hover:underline font-semibold mt-2">Preencher novamente</button>
           </div>
         ) : (
-          <form onSubmit={e => { e.preventDefault(); step < STEPS.length - 1 ? setStep(s => s + 1) : setDone(true); }}>
+          <form onSubmit={async e => {
+            e.preventDefault();
+            if (step < STEPS.length - 1) {
+              setStep(s => s + 1);
+            } else {
+              try {
+                await api.submitCensus(form);
+                setDone(true);
+                setForm({ jeName:'', foundationYear:'', headquarters:'', membersCount:'', projectsCount:'', faturamentoAnual:'' });
+              } catch (err) {
+                console.error(err);
+                alert("Erro ao submeter censo. Por favor, tente novamente.");
+              }
+            }
+          }}>
             {/* Stepper linear */}
             <div className="flex items-center gap-0 mb-10">
               {STEPS.map((s, i) => (
@@ -48,7 +63,28 @@ export default function CensosView() {
             {/* Campos */}
             <div className="space-y-5">
               {step === 0 && <>
-                <Field label="Nome da Júnior Empresa" value={form.jeName}        onChange={v => set('jeName', v)}        placeholder="Ex: Porto Júnior" />
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Nome da Júnior Empresa</label>
+                  <select
+                    value={form.jeName}
+                    onChange={e => {
+                      const selectedName = e.target.value;
+                      const foundOrg = data.organizationsStatus.find(o => o.name === selectedName);
+                      setForm(p => ({
+                        ...p,
+                        jeName: selectedName,
+                        membersCount: foundOrg ? String(foundOrg.members || 0) : ''
+                      }));
+                    }}
+                    required
+                    className="w-full text-[13px] px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all text-gray-600 cursor-pointer"
+                  >
+                    <option value="">Selecione uma organização...</option>
+                    {data.organizationsStatus.map(org => (
+                      <option key={org.id} value={org.name}>{org.name}</option>
+                    ))}
+                  </select>
+                </div>
                 <Field label="Ano de Fundação"        value={form.foundationYear} onChange={v => set('foundationYear', v)} placeholder="Ex: 2014" type="number" />
                 <Field label="Sede / Faculdade"       value={form.headquarters}   onChange={v => set('headquarters', v)}   placeholder="Ex: FEUP" />
               </>}

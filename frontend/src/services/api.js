@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3030/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3030/api';
 
 export const api = {
   getDashboardSummary: async () => {
@@ -115,6 +115,20 @@ export const api = {
       method: 'DELETE'
     });
     if (!res.ok) throw new Error('Erro ao remover tópico de auditoria');
+    return res.json();
+  },
+  submitCensus: async (censusData) => {
+    const res = await fetch(`${API_URL}/censos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(censusData)
+    });
+    if (!res.ok) throw new Error('Erro ao submeter censo anual');
+    return res.json();
+  },
+  getCensuses: async () => {
+    const res = await fetch(`${API_URL}/censos`);
+    if (!res.ok) throw new Error('Erro ao obter censos');
     return res.json();
   }
 };

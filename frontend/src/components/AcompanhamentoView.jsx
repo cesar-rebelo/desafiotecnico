@@ -103,10 +103,15 @@ export default function AcompanhamentoView({ data, onIndicatorSubmit }) {
                   onSubmit={handleFormSubmit}
                   initialValues={activeCycle ? {
                     faturamento: activeCycle.indicators.find(i => i.key === 'Faturamento')?.value || '',
-                    membros: activeCycle.indicators.find(i => i.key === 'NumeroMembros' || i.key === 'NumeroMembros')?.value || '',
+                    membros: activeCycle.indicators.find(i => i.key === 'NumeroMembros')?.value || selectedJE.members || '',
                     nps: activeCycle.indicators.find(i => i.key === 'NPS')?.value || '',
                     semester: activeCycle.semester || '2026.1'
-                  } : null}
+                  } : {
+                    faturamento: '',
+                    membros: selectedJE.members || '',
+                    nps: '',
+                    semester: '2026.1'
+                  }}
                 />
               ) : (
                 <div className="bg-white border border-gray-200/50 rounded-2xl p-6 shadow-sm">

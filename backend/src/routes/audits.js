@@ -3,15 +3,40 @@ import prisma from '../lib/prisma.js';
 
 const router = Router();
 
+// Mock data in memory for audits and topics when database is offline
+const mockTopics = [
+  { id: '1', name: 'Registo de Atividade Semestral', required: true },
+  { id: '2', name: 'Relatório de Contas', required: true },
+  { id: '3', name: 'Estatutos Atualizados', required: true },
+  { id: '4', name: 'Ata da Assembleia Geral', required: true }
+];
+
+const mockAuditsByOrg = {};
+
+function getMockAudit(orgId) {
+  if (!mockAuditsByOrg[orgId]) {
+    mockAuditsByOrg[orgId] = {
+      id: `mock-audit-${orgId}`,
+      year: 2026,
+      status: 'SCHEDULED',
+      score: 0,
+      organizationId: orgId,
+      documents: mockTopics.map((topic, i) => ({
+        id: `mock-doc-${orgId}-${i + 1}`,
+        name: topic.name,
+        isApproved: null,
+        feedback: null,
+        fileUrl: null
+      }))
+    };
+  }
+  return mockAuditsByOrg[orgId];
+}
+
 // Obter todos os tópicos de auditoria globais
 router.get('/topics', async (req, res) => {
   if (!prisma) {
-    return res.json([
-      { id: '1', name: 'Registo de Atividade Semestral', required: true },
-      { id: '2', name: 'Relatório de Contas', required: true },
-      { id: '3', name: 'Estatutos Atualizados', required: true },
-      { id: '4', name: 'Ata da Assembleia Geral', required: true }
-    ]);
+    return res.json(mockTopics);
   }
   try {
     const topics = await prisma.auditTopic.findMany({
@@ -19,8 +44,8 @@ router.get('/topics', async (req, res) => {
     });
     res.json(topics);
   } catch (err) {
-    console.error("Database error fetching audit topics:", err.message);
-    res.status(500).json({ error: 'Erro ao consultar tópicos de auditoria' });
+    console.error("Database error fetching audit topics, falling back to mock:", err.message);
+    res.json(mockTopics);
   }
 });
 
@@ -29,7 +54,29 @@ router.post('/topics', async (req, res) => {
   const { name, required } = req.body;
   if (!name) return res.status(400).json({ error: 'O nome do tópico é obrigatório' });
 
-  if (!prisma) return res.status(500).json({ error: 'Banco de dados offline' });
+  if (!prisma) {
+    const newTopic = {
+      id: String(mockTopics.length + 1),
+      name: name.trim(),
+      required: required !== false
+    };
+    mockTopics.push(newTopic);
+    // Sincronizar com as auditorias simuladas existentes
+    for (const audit of Object.values(mockAuditsByOrg)) {
+      audit.documents.push({
+        id: `mock-doc-${audit.organizationId}-${Date.now()}`,
+        name: newTopic.name,
+        isApproved: null,
+        feedback: null,
+        fileUrl: null
+      });
+      // Recalcular score
+      const total = audit.documents.length;
+      const approved = audit.documents.filter(d => d.isApproved === true).length;
+      audit.score = total > 0 ? (approved / total) * 100 : 0;
+    }
+    return res.json(newTopic);
+  }
 
   try {
     const topic = await prisma.auditTopic.create({
@@ -62,8 +109,14 @@ router.post('/topics', async (req, res) => {
 
     res.json(topic);
   } catch (err) {
-    console.error("Database error creating audit topic:", err.message);
-    res.status(500).json({ error: 'Erro ao criar tópico de auditoria' });
+    console.error("Database error creating audit topic, falling back to mock:", err.message);
+    const newTopic = {
+      id: String(mockTopics.length + 1),
+      name: name.trim(),
+      required: required !== false
+    };
+    mockTopics.push(newTopic);
+    res.json(newTopic);
   }
 });
 
@@ -72,7 +125,23 @@ router.put('/topics/:id', async (req, res) => {
   const { id } = req.params;
   const { name, required } = req.body;
 
-  if (!prisma) return res.status(500).json({ error: 'Banco de dados offline' });
+  if (!prisma) {
+    const idx = mockTopics.findIndex(t => t.id === id);
+    if (idx === -1) return res.status(404).json({ error: 'Tópico de auditoria não encontrado' });
+    
+    const oldName = mockTopics[idx].name;
+    mockTopics[idx].name = name !== undefined ? name.trim() : mockTopics[idx].name;
+    mockTopics[idx].required = required !== undefined ? Boolean(required) : mockTopics[idx].required;
+
+    if (name && name.trim() !== oldName) {
+      for (const audit of Object.values(mockAuditsByOrg)) {
+        for (const doc of audit.documents) {
+          if (doc.name === oldName) doc.name = name.trim();
+        }
+      }
+    }
+    return res.json(mockTopics[idx]);
+  }
 
   try {
     const oldTopic = await prisma.auditTopic.findUnique({ where: { id } });
@@ -96,8 +165,12 @@ router.put('/topics/:id', async (req, res) => {
 
     res.json(topic);
   } catch (err) {
-    console.error("Database error updating audit topic:", err.message);
-    res.status(500).json({ error: 'Erro ao alterar tópico de auditoria' });
+    console.error("Database error updating audit topic, falling back to mock:", err.message);
+    const idx = mockTopics.findIndex(t => t.id === id);
+    if (idx === -1) return res.status(404).json({ error: 'Tópico de auditoria não encontrado' });
+    mockTopics[idx].name = name !== undefined ? name.trim() : mockTopics[idx].name;
+    mockTopics[idx].required = required !== undefined ? Boolean(required) : mockTopics[idx].required;
+    res.json(mockTopics[idx]);
   }
 });
 
@@ -105,7 +178,34 @@ router.put('/topics/:id', async (req, res) => {
 router.delete('/topics/:id', async (req, res) => {
   const { id } = req.params;
 
-  if (!prisma) return res.status(500).json({ error: 'Banco de dados offline' });
+  if (!prisma) {
+    const idx = mockTopics.findIndex(t => t.id === id);
+    if (idx === -1) return res.status(404).json({ error: 'Tópico de auditoria não encontrado' });
+    
+    const topicName = mockTopics[idx].name;
+    mockTopics.splice(idx, 1);
+
+    for (const audit of Object.values(mockAuditsByOrg)) {
+      audit.documents = audit.documents.filter(d => d.name !== topicName);
+      // Recalcular
+      const total = audit.documents.length;
+      const approved = audit.documents.filter(d => d.isApproved === true).length;
+      const rejected = audit.documents.filter(d => d.isApproved === false).length;
+      const hasFiles = audit.documents.filter(d => d.fileUrl !== null).length;
+      audit.score = total > 0 ? (approved / total) * 100 : 0;
+      
+      if (approved === total) {
+        audit.status = 'APPROVED';
+      } else if (rejected > 0) {
+        audit.status = 'REJECTED';
+      } else if (hasFiles > 0) {
+        audit.status = 'DOCUMENTS_SUBMITTED';
+      } else {
+        audit.status = 'SCHEDULED';
+      }
+    }
+    return res.json({ message: 'Tópico de auditoria removido com sucesso' });
+  }
 
   try {
     const topic = await prisma.auditTopic.findUnique({ where: { id } });
@@ -148,8 +248,10 @@ router.delete('/topics/:id', async (req, res) => {
 
     res.json({ message: 'Tópico de auditoria removido com sucesso' });
   } catch (err) {
-    console.error("Database error deleting audit topic:", err.message);
-    res.status(500).json({ error: 'Erro ao remover tópico de auditoria' });
+    console.error("Database error deleting audit topic, falling back to mock:", err.message);
+    const idx = mockTopics.findIndex(t => t.id === id);
+    if (idx !== -1) mockTopics.splice(idx, 1);
+    res.json({ message: 'Tópico de auditoria removido com sucesso (Modo Simulação)' });
   }
 });
 
@@ -159,7 +261,7 @@ router.get('/:orgId', async (req, res) => {
   const currentYear = 2026;
 
   if (!prisma) {
-    return res.status(500).json({ error: 'Banco de dados offline' });
+    return res.json(getMockAudit(orgId));
   }
 
   try {
@@ -208,8 +310,8 @@ router.get('/:orgId', async (req, res) => {
 
     res.json(audit);
   } catch (error) {
-    console.error("Database error fetching audit:", error.message);
-    res.status(500).json({ error: 'Erro ao consultar auditoria no banco' });
+    console.error("Database error fetching audit, falling back to mock:", error.message);
+    res.json(getMockAudit(orgId));
   }
 });
 
@@ -219,7 +321,38 @@ router.put('/documents/:docId', async (req, res) => {
   const { isApproved, feedback } = req.body;
 
   if (!prisma) {
-    return res.status(500).json({ error: 'Banco de dados offline' });
+    let foundDoc = null;
+    let foundAudit = null;
+    for (const audit of Object.values(mockAuditsByOrg)) {
+      foundDoc = audit.documents.find(d => d.id === docId);
+      if (foundDoc) {
+        foundAudit = audit;
+        break;
+      }
+    }
+    if (!foundDoc) return res.status(404).json({ error: 'Documento não encontrado' });
+
+    foundDoc.isApproved = isApproved === null ? null : Boolean(isApproved);
+    foundDoc.feedback = feedback || null;
+
+    const total = foundAudit.documents.length;
+    const approved = foundAudit.documents.filter(d => d.isApproved === true).length;
+    const rejected = foundAudit.documents.filter(d => d.isApproved === false).length;
+    const hasFiles = foundAudit.documents.filter(d => d.fileUrl !== null).length;
+    
+    foundAudit.score = total > 0 ? (approved / total) * 100 : 0;
+    
+    if (approved === total) {
+      foundAudit.status = 'APPROVED';
+    } else if (rejected > 0) {
+      foundAudit.status = 'REJECTED';
+    } else if (hasFiles > 0) {
+      foundAudit.status = 'DOCUMENTS_SUBMITTED';
+    } else {
+      foundAudit.status = 'SCHEDULED';
+    }
+
+    return res.json({ document: foundDoc, audit: foundAudit });
   }
 
   try {
@@ -263,8 +396,23 @@ router.put('/documents/:docId', async (req, res) => {
 
     res.json({ document: doc, audit: updatedAudit });
   } catch (error) {
-    console.error("Database error updating audit document:", error.message);
-    res.status(500).json({ error: 'Erro ao atualizar documento de auditoria' });
+    console.error("Database error updating audit document, falling back to mock:", error.message);
+    let foundDoc = null;
+    let foundAudit = null;
+    for (const audit of Object.values(mockAuditsByOrg)) {
+      foundDoc = audit.documents.find(d => d.id === docId);
+      if (foundDoc) {
+        foundAudit = audit;
+        break;
+      }
+    }
+    if (foundDoc) {
+      foundDoc.isApproved = isApproved === null ? null : Boolean(isApproved);
+      foundDoc.feedback = feedback || null;
+      res.json({ document: foundDoc, audit: foundAudit });
+    } else {
+      res.status(500).json({ error: 'Erro ao atualizar documento de auditoria' });
+    }
   }
 });
 
@@ -273,7 +421,39 @@ router.post('/documents/:docId/submit', async (req, res) => {
   const { docId } = req.params;
 
   if (!prisma) {
-    return res.status(500).json({ error: 'Banco de dados offline' });
+    let foundDoc = null;
+    let foundAudit = null;
+    for (const audit of Object.values(mockAuditsByOrg)) {
+      foundDoc = audit.documents.find(d => d.id === docId);
+      if (foundDoc) {
+        foundAudit = audit;
+        break;
+      }
+    }
+    if (!foundDoc) return res.status(404).json({ error: 'Documento não encontrado' });
+
+    foundDoc.fileUrl = `/uploads/simulado_${Date.now()}.pdf`;
+    foundDoc.isApproved = null; // Volta a pendente de análise
+    foundDoc.feedback = null;
+
+    const total = foundAudit.documents.length;
+    const approved = foundAudit.documents.filter(d => d.isApproved === true).length;
+    const rejected = foundAudit.documents.filter(d => d.isApproved === false).length;
+    const hasFiles = foundAudit.documents.filter(d => d.fileUrl !== null).length;
+
+    foundAudit.score = total > 0 ? (approved / total) * 100 : 0;
+
+    if (approved === total) {
+      foundAudit.status = 'APPROVED';
+    } else if (rejected > 0) {
+      foundAudit.status = 'REJECTED';
+    } else if (hasFiles > 0) {
+      foundAudit.status = 'DOCUMENTS_SUBMITTED';
+    } else {
+      foundAudit.status = 'SCHEDULED';
+    }
+
+    return res.json({ document: foundDoc, audit: foundAudit });
   }
 
   try {
@@ -319,8 +499,24 @@ router.post('/documents/:docId/submit', async (req, res) => {
 
     res.json({ document: doc, audit: updatedAudit });
   } catch (error) {
-    console.error("Database error submitting document:", error.message);
-    res.status(500).json({ error: 'Erro ao submeter documento' });
+    console.error("Database error submitting document, falling back to mock:", error.message);
+    let foundDoc = null;
+    let foundAudit = null;
+    for (const audit of Object.values(mockAuditsByOrg)) {
+      foundDoc = audit.documents.find(d => d.id === docId);
+      if (foundDoc) {
+        foundAudit = audit;
+        break;
+      }
+    }
+    if (foundDoc) {
+      foundDoc.fileUrl = `/uploads/simulado_${Date.now()}.pdf`;
+      foundDoc.isApproved = null;
+      foundDoc.feedback = null;
+      res.json({ document: foundDoc, audit: foundAudit });
+    } else {
+      res.status(500).json({ error: 'Erro ao submeter documento' });
+    }
   }
 });
 
